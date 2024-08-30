@@ -34,7 +34,7 @@
                             <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">🛠️ Server Managment</a>
                         </li>
                         <li>
-                            <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">👋 Logout</a>
+                            <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded" onclick="deleteSessionCookie('session'); return false;">👋 Logout</a>
                         </li>
                     </ul>
               </nav>
@@ -46,7 +46,10 @@
         </main>
     </div>
     <script>
-    
+    function deleteSessionCookie(name) {
+        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = '/'; // Redirect to home or login page
+        }
     </script>
 </body>
 </html>

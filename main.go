@@ -462,7 +462,7 @@ func main() {
 			session.Options = &sessions.Options{
 				Path:     "/",
 				MaxAge:   3600, // 1 hour
-				HttpOnly: true, // Prevents JavaScript access
+				HttpOnly: false, // Prevents JavaScript access
 				Secure:   false, // Set to true if using HTTPS
 				SameSite: http.SameSiteLaxMode, // Adjust as needed
 			}
