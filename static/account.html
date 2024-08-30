@@ -46,7 +46,7 @@
             inputs.forEach(input => { concatenatedData += input.value; });
             console.log(concatenatedData);
             try {
-                const response = await fetch("http://localhost:1337/api/validate-otp", {
+                const response = await fetch("http://localhost:8888/validate-otp", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

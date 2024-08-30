@@ -13,6 +13,14 @@ import (
     "github.com/skip2/go-qrcode"
 	"io/ioutil"
 	"os"
+	"github.com/gorilla/sessions"
+)
+
+var otpFile = "/etc/gopanel"
+
+var (
+    key   = []byte("supersecret")
+    store = sessions.NewCookieStore(key)
 )
 
 func fileExists(filename string) bool {
@@ -50,38 +58,6 @@ func validateOTP(otp string) (bool, error) {
     // Validate the OTP using the secret
     valid := totp.Validate(otp, secret)
     return valid, nil
-}
-
-func validateOTPHandler(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-        return
-    }
-
-    var pinReq PinRequest
-
-    // Decode the incoming JSON request
-    err := json.NewDecoder(r.Body).Decode(&pinReq)
-    if err != nil {
-        http.Error(w, "Error parsing JSON request", http.StatusBadRequest)
-        return
-    }
-
-    // Validate the OTP/PIN
-    valid, err := validateOTP(pinReq.PIN)
-    if err != nil {
-        http.Error(w, "Error validating OTP", http.StatusInternalServerError)
-        return
-    }
-
-    // Respond based on the validity of the OTP
-    if valid {
-        w.WriteHeader(http.StatusOK)
-        w.Write([]byte("OTP is valid!"))
-    } else {
-        w.WriteHeader(http.StatusUnauthorized)
-        w.Write([]byte("Invalid OTP"))
-    }
 }
 
 func getServerIP() (string, error) {
@@ -352,7 +328,7 @@ func checkIfStackReady () (bool) {
 }
 
 func generate2FAHandler(w http.ResponseWriter, r *http.Request) {
-	otpFile := "/etc/gopanel"
+	
 
 	if fileExists(otpFile) {
         log.Printf("OTP file exists")
@@ -395,7 +371,6 @@ func main() {
 		backendMux.HandleFunc("/api/status", statusHandler)
 		backendMux.HandleFunc("/api/install-stack", stackInstallationHandler)
 		backendMux.HandleFunc("/api/generate-2fa.png", generate2FAHandler)
-		backendMux.HandleFunc("/api/validate-otp", validateOTPHandler)
         port := ":1337"
         log.Printf("Starting backend server on port %s...", port)
         if err := http.ListenAndServe(port, withCORS(backendMux)); err != nil {
@@ -407,8 +382,19 @@ func main() {
     frontendHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fileToServe := ""
 		if checkIfStackReady() {
+			session, _ := store.Get(r, "session")
 			filePath := filepath.Join("static", r.URL.Path[1:])
-			fileToServe = filePath
+			
+			// Check if the user is authenticated
+			if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+				if !fileExists(otpFile) {
+					fileToServe = "static/account.html"
+				} else {
+					fileToServe = "static/login.html"
+				}
+			} else {
+				fileToServe = filePath
+			}
 		} else {
 			fileToServe = "static/install.html"
 		}
@@ -422,9 +408,57 @@ func main() {
 		log.Println(r.Method, r.URL, r.RemoteAddr)
     })
 
+	validateOTPHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+			return
+		}
+	
+		var pinReq PinRequest
+	
+		// Decode the incoming JSON request
+		err := json.NewDecoder(r.Body).Decode(&pinReq)
+		if err != nil {
+			http.Error(w, "Error parsing JSON request", http.StatusBadRequest)
+			return
+		}
+	
+		// Validate the OTP/PIN
+		valid, err := validateOTP(pinReq.PIN)
+		if err != nil {
+			http.Error(w, "Error validating OTP", http.StatusInternalServerError)
+			return
+		}
+	
+		// Respond based on the validity of the OTP
+		if valid {
+			session, _ := store.Get(r, "session")
+			session.Values["authenticated"] = true
+			session.Options = &sessions.Options{
+				Path:     "/",
+				MaxAge:   3600, // 1 hour
+				HttpOnly: true, // Prevents JavaScript access
+				Secure:   false, // Set to true if using HTTPS
+				SameSite: http.SameSiteLaxMode, // Adjust as needed
+			}
+	
+			err = session.Save(r, w)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OTP is valid!"))
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Invalid OTP"))
+		}
+	})
+
     // Create and start the frontend server
     go func() {
         http.Handle("/", frontendHandler)
+		http.Handle("/validate-otp", validateOTPHandler)
         port := ":8888"
         log.Printf("Starting frontend server on port %s...", port)
         if err := http.ListenAndServe(port, nil); err != nil {

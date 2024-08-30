@@ -45,16 +45,14 @@
             inputs.forEach(input => { concatenatedData += input.value; });
             console.log(concatenatedData);
             try {
-                const response = await fetch("http://localhost:1337/api/validate-otp", {
+                const response = await fetch("http://localhost:8888/validate-otp", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({ pin: concatenatedData })
                 });
-
-                const result = await response.text();
-
+                
                 if (response.ok) {
                     document.getElementById("response-message").textContent = "OTP is valid!";
                     setTimeout(function() {window.location.href = 'dashboard.html';}, 1000); // 1000 milliseconds = 1 second
