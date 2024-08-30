@@ -16,7 +16,8 @@
         </ul>
         <div class="flex justify-between mt-5 px-4">
             <button id="install-button" class="transition-all bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300">
-                Install missing components
+                <span id="spinner" class="transition-all absolute animate-spin hidden">⏳</span>
+                <span id="install-button-text" class="transition-all ">Install missing components</span>
             </button>
             <a href="account.html"><button id="next-button" class="transition-all bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300" disabled>
                 Next
@@ -26,6 +27,9 @@
     <script>
         const nextButton = document.getElementById('next-button');
         const installButton = document.getElementById('install-button');
+        const spinner = document.getElementById('spinner');
+        const installButtonText = document.getElementById('install-button-text');
+
 
         async function fetchStatus() {
             try {
@@ -63,6 +67,9 @@
                 if (values.every(item => item === true)){
                     nextButton.disabled = false;
                     installButton.disabled = true;
+                    spinner.classList.add('hidden');
+                    installButtonText.textContent = "Done!";
+                    installButtonText.classList.remove('ml-7');
                 }
                 else {
                     nextButton.disabled = true;
@@ -74,13 +81,8 @@
 
         async function checkAndInstallSoftware() {
             installButton.disabled = true;
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("class", "animate-spin h-5 w-5 mr-3");
-            svg.setAttribute("viewBox", "0 0 24 24");
-            svg.innerHTML = `
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
-            `;
-            installButton.prepend(svg);
+            spinner.classList.remove('hidden');
+            installButtonText.classList.add('ml-7');
             try {
                  // Fetch the status of installed software
                 const statusResponse = await fetch('http://localhost:1337/api/status');
