@@ -16,7 +16,38 @@ import (
 	"github.com/gorilla/sessions"
     "crypto/rand"
     "encoding/base64"
+	"github.com/shirou/gopsutil/load"
+	"runtime"
 )
+
+type LoadAvg struct {
+	Cores  int 	   `json:"cores"`
+    Load1  float64 `json:"load1"`
+    Load5  float64 `json:"load5"`
+    Load15 float64 `json:"load15"`
+}
+
+func loadHandler(w http.ResponseWriter, r *http.Request) {
+    avg, err := load.Avg()
+    if err != nil {
+        http.Error(w, "Could not retrieve load average", http.StatusInternalServerError)
+        return
+    }
+
+	numCPU := runtime.NumCPU()
+
+    loadAvg := LoadAvg{
+		Cores:  numCPU,
+        Load1:  avg.Load1,
+        Load5:  avg.Load5,
+        Load15: avg.Load15,
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(loadAvg)
+
+}
+
 
 var otpFile = "/etc/gopanel"
 
@@ -140,11 +171,13 @@ func withCORS(next http.Handler) http.Handler {
         w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
+		log.Println(r.Method, r.URL, r.RemoteAddr)
         // Handle OPTIONS method for preflight requests
         if r.Method == http.MethodOptions {
             w.WriteHeader(http.StatusOK)
             return
         }
+
 
         // Call the next handler if it's not an OPTIONS request
         next.ServeHTTP(w, r)
@@ -396,6 +429,7 @@ func main() {
 		backendMux.HandleFunc("/api/status", statusHandler)
 		backendMux.HandleFunc("/api/install-stack", stackInstallationHandler)
 		backendMux.HandleFunc("/api/generate-2fa.png", generate2FAHandler)
+		backendMux.HandleFunc("/api/load", loadHandler)
         port := ":1337"
         log.Printf("Starting backend server on port %s...", port)
         if err := http.ListenAndServe(port, withCORS(backendMux)); err != nil {
@@ -478,6 +512,7 @@ func main() {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("Invalid OTP"))
 		}
+		log.Println(r.Method, r.URL, r.RemoteAddr)
 	})
 
     // Create and start the frontend server
