@@ -22,7 +22,7 @@
                 <input type="text" maxlength="1" class="w-12 h-12 text-center text-2xl font-bold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </form>
             <p id="response-message"></p>
-            <button id="validate-otp" type="submit" class="mt-4 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300" disabled>Submit</button>
+            <button id="validate-otp" type="submit" class="mt-4 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300" disabled>Validate</button>
         </div>
     </div>
     <script>
@@ -73,7 +73,6 @@
             });
         });
 
-
         document.getElementById('validate-otp').addEventListener('click', () => {
             // Implement the installation logic or redirection here
             validateOTP();
@@ -93,14 +92,23 @@
                     },
                     body: JSON.stringify({ pin: concatenatedData })
                 });
-
-                const result = await response.text();
-
+                
                 if (response.ok) {
-                    document.getElementById("response-message").textContent = "OTP is valid!";
-                    setTimeout(function() {window.location.href = 'login.html';}, 1000); // 1000 milliseconds = 1 second
+                    document.getElementById("validate-otp").classList.remove('bg-blue-500','hover:bg-blue-600','focus:ring-blue-500');
+                    document.getElementById("validate-otp").classList.add('bg-green-500','hover:bg-green-600','focus:ring-green-500');
+                    document.getElementById("validate-otp").textContent = "Access granted!";
+                    setTimeout(function() {window.location.href = 'dashboard.html';}, 1000); // 1000 milliseconds = 1 second
+
                 } else {
-                    document.getElementById("response-message").textContent = "Invalid OTP: " + result;
+                    document.getElementById("validate-otp").textContent = "Invalid OTP!";
+                    document.getElementById("validate-otp").classList.remove('bg-blue-500','hover:bg-blue-600','focus:ring-blue-500');
+                    document.getElementById("validate-otp").classList.add('animate-pulse','bg-red-500','hover:bg-red-600','focus:ring-red-500');
+                    setTimeout(() => {
+                        document.getElementById("validate-otp").classList.add('bg-blue-500','hover:bg-blue-600','focus:ring-blue-500');
+                        document.getElementById("validate-otp").classList.remove('animate-pulse','bg-red-500','hover:bg-red-600','focus:ring-red-500');
+                        document.getElementById('validate-otp').disabled = true;
+                        document.getElementById("validate-otp").textContent = "Validate";
+                    }, 1000);
                 }
             } catch (error) {
                 document.getElementById("response-message").textContent = "Error: " + error.message;

@@ -15,10 +15,10 @@
         <ul id="status-list" class="list-disc pl-5 font-mono">
         </ul>
         <div class="flex justify-between mt-5 px-4">
-            <button id="install-button" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300">
+            <button id="install-button" class="transition-all bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300">
                 Install missing components
             </button>
-            <a href="account.html"><button id="next-button" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300" disabled>
+            <a href="account.html"><button id="next-button" class="transition-all bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300" disabled>
                 Next
             </button></a>
         </div>
@@ -74,6 +74,13 @@
 
         async function checkAndInstallSoftware() {
             installButton.disabled = true;
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("class", "animate-spin h-5 w-5 mr-3");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.innerHTML = `
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+            `;
+            installButton.prepend(svg);
             try {
                  // Fetch the status of installed software
                 const statusResponse = await fetch('http://localhost:1337/api/status');

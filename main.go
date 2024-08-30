@@ -14,12 +14,37 @@ import (
 	"io/ioutil"
 	"os"
 	"github.com/gorilla/sessions"
+    "crypto/rand"
+    "encoding/base64"
 )
 
 var otpFile = "/etc/gopanel"
 
+func generateSecretKey(length int) (string, error) {
+    // Create a byte slice with the desired length
+    bytes := make([]byte, length)
+
+    // Fill the byte slice with random data
+    _, err := rand.Read(bytes)
+    if err != nil {
+        return "", err
+    }
+
+    // Encode the byte slice to a base64 string
+    // Using base64 encoding to avoid issues with non-printable characters
+    randomString := base64.URLEncoding.EncodeToString(bytes)
+
+    // Truncate the string to the desired length
+    if length < len(randomString) {
+        randomString = randomString[:length]
+    }
+
+    return randomString, nil
+}
+
 var (
-    key   = []byte("supersecret")
+	randomString, _ = generateSecretKey(16)
+    key   = []byte(randomString)
     store = sessions.NewCookieStore(key)
 )
 
@@ -450,7 +475,7 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("OTP is valid!"))
 		} else {
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("Invalid OTP"))
 		}
 	})
