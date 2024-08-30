@@ -15,6 +15,75 @@ import (
 	"os"
 )
 
+func fileExists(filename string) bool {
+    _, err := os.Stat(filename)
+    if err == nil {
+        return true
+    }
+    if os.IsNotExist(err) {
+        return false
+    }
+    return false
+}
+
+type PinRequest struct {
+    PIN string `json:"pin"`
+}
+
+func readSecretFromFile() (string, error) {
+	filePath := "/etc/gopanel"
+    data, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        return "", fmt.Errorf("error reading file: %w", err)
+    }
+    return string(data), nil
+}
+
+func validateOTP(otp string) (bool, error) {
+
+    // Read the secret from the file
+    secret, err := readSecretFromFile()
+    if err != nil {
+        return false, err
+    }
+
+    // Validate the OTP using the secret
+    valid := totp.Validate(otp, secret)
+    return valid, nil
+}
+
+func validateOTPHandler(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+    var pinReq PinRequest
+
+    // Decode the incoming JSON request
+    err := json.NewDecoder(r.Body).Decode(&pinReq)
+    if err != nil {
+        http.Error(w, "Error parsing JSON request", http.StatusBadRequest)
+        return
+    }
+
+    // Validate the OTP/PIN
+    valid, err := validateOTP(pinReq.PIN)
+    if err != nil {
+        http.Error(w, "Error validating OTP", http.StatusInternalServerError)
+        return
+    }
+
+    // Respond based on the validity of the OTP
+    if valid {
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte("OTP is valid!"))
+    } else {
+        w.WriteHeader(http.StatusUnauthorized)
+        w.Write([]byte("Invalid OTP"))
+    }
+}
+
 func getServerIP() (string, error) {
     // URL of the service that provides the public IP address
     url := "https://ifconfig.me"
@@ -42,9 +111,10 @@ func getServerIP() (string, error) {
 
 func generate2FAQRCode() ([]byte, string, error) {
     // Generate a new OTP key
+	ip, _ := getServerIP() 
     key, err := totp.Generate(totp.GenerateOpts{
         Issuer:      "GoPanel",
-        AccountName: fmt.Sprintf("admin@%s",getServerIP),
+        AccountName: fmt.Sprintf("admin@%s",ip),
     })
     if err != nil {
         return nil, "", err
@@ -248,15 +318,17 @@ func stackInstallationHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    var requestData struct {
-        Packages []string `json:"packages"`
-    }
+
 
     // Parse the request body
     body, err := io.ReadAll(r.Body)
     if err != nil {
         http.Error(w, "Error reading request body", http.StatusInternalServerError)
         return
+    }
+
+	var requestData struct {
+        Packages []string `json:"packages"`
     }
 
     err = json.Unmarshal(body, &requestData)
@@ -280,24 +352,33 @@ func checkIfStackReady () (bool) {
 }
 
 func generate2FAHandler(w http.ResponseWriter, r *http.Request) {
-    qrCode, secret, err := generate2FAQRCode()
-    if err != nil {
-        http.Error(w, "Error generating QR code", http.StatusInternalServerError)
-        return
+	otpFile := "/etc/gopanel"
+
+	if fileExists(otpFile) {
+        log.Printf("OTP file exists")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("OTP already exists"))
+    } else {
+		qrCode, secret, err := generate2FAQRCode()
+		if err != nil {
+			http.Error(w, "Error generating QR code", http.StatusInternalServerError)
+			return
+		}
+	
+		// Send QR code image as response
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Content-Disposition", "inline; filename=\"qrcode.png\"")
+		w.Write(qrCode)
+	
+		// Optionally, log the OTP secret (for testing purposes)
+		log.Println("OTP Secret:", secret)
+		file, err := os.OpenFile("/etc/gopanel", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+		defer file.Close()
+	
+		// Write the content to the file
+		_, err = file.WriteString(secret)
     }
 
-    // Send QR code image as response
-    w.Header().Set("Content-Type", "image/png")
-    w.Header().Set("Content-Disposition", "inline; filename=\"qrcode.png\"")
-    w.Write(qrCode)
-
-    // Optionally, log the OTP secret (for testing purposes)
-    log.Println("OTP Secret:", secret)
-	file, err := os.OpenFile("/etc/gopanel", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-    defer file.Close()
-
-    // Write the content to the file
-    _, err = file.WriteString(secret)
 }
 
 //go:embed static/*
@@ -314,6 +395,7 @@ func main() {
 		backendMux.HandleFunc("/api/status", statusHandler)
 		backendMux.HandleFunc("/api/install-stack", stackInstallationHandler)
 		backendMux.HandleFunc("/api/generate-2fa.png", generate2FAHandler)
+		backendMux.HandleFunc("/api/validate-otp", validateOTPHandler)
         port := ":1337"
         log.Printf("Starting backend server on port %s...", port)
         if err := http.ListenAndServe(port, withCORS(backendMux)); err != nil {
