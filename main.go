@@ -8,9 +8,59 @@ import (
     "net/http"
 	"os/exec"
 	"io"
+    "path/filepath"
+	"github.com/pquerna/otp/totp"
+    "github.com/skip2/go-qrcode"
+	"io/ioutil"
+	"os"
 )
 
+func getServerIP() (string, error) {
+    // URL of the service that provides the public IP address
+    url := "https://ifconfig.me"
 
+    // Perform the HTTP GET request
+    resp, err := http.Get(url)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+
+    // Check if the request was successful
+    if resp.StatusCode != http.StatusOK {
+        return "", fmt.Errorf("failed to get IP address, status code: %d", resp.StatusCode)
+    }
+
+    // Read the response body
+    ipAddress, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+
+    return string(ipAddress), nil
+}
+
+func generate2FAQRCode() ([]byte, string, error) {
+    // Generate a new OTP key
+    key, err := totp.Generate(totp.GenerateOpts{
+        Issuer:      "GoPanel",
+        AccountName: fmt.Sprintf("admin@%s",getServerIP),
+    })
+    if err != nil {
+        return nil, "", err
+    }
+
+    // Generate a URL to encode in the QR code
+    url := key.URL()
+
+    // Generate the QR code image
+    qrCode, err := qrcode.Encode(url, qrcode.Medium, 256)
+    if err != nil {
+        return nil, "", err
+    }
+
+    return qrCode, key.Secret(), nil
+}
 
 func withCORS(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -117,7 +167,6 @@ func pkgManager(action, software string) error {
 	case "pkg":
 		if action == "install" {
 			cmd = exec.Command("pkg", "install", "-y", software)
-			log.Printf("installing '%s'", software)
 		} else if action == "remove" {
 			cmd = exec.Command("pkg", "delete", "-y", software)
 		} else if action == "check" {
@@ -170,17 +219,27 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkAndInstallSoftware(packages []string) {
-    for _, pkg := range packages {
-        if !checkIfInstalled(pkg) {
-			err := pkgManager("install", pkg)
-			fmt.Printf("installing: %s \n", pkg)
-			if err != nil {
-				fmt.Println("Error:", err)
-			}
-        } else {
-            fmt.Printf("%s is already installed.\n", pkg)
-        }
+	allowedPackages := map[string]struct{}{
+        "nginx":           {},
+        "mariadb-server":  {},
+        "php8.1-fpm":      {},
+        "cron":            {},
     }
+		for _, pkg := range packages {
+			if _, ok := allowedPackages[pkg]; ok {
+				if !checkIfInstalled(pkg) {
+					err := pkgManager("install", pkg)
+					log.Printf("installing: %s \n", pkg)
+					if err != nil {
+						log.Printf("Error: %s", err)
+					}
+					} else {
+					log.Printf("%s is already installed.\n", pkg)
+				}
+			}  else {
+				log.Printf("%s is not in the allowed list.\n", pkg)
+			}
+		}
 }
 
 func stackInstallationHandler(w http.ResponseWriter, r *http.Request) {
@@ -220,6 +279,27 @@ func checkIfStackReady () (bool) {
 	}
 }
 
+func generate2FAHandler(w http.ResponseWriter, r *http.Request) {
+    qrCode, secret, err := generate2FAQRCode()
+    if err != nil {
+        http.Error(w, "Error generating QR code", http.StatusInternalServerError)
+        return
+    }
+
+    // Send QR code image as response
+    w.Header().Set("Content-Type", "image/png")
+    w.Header().Set("Content-Disposition", "inline; filename=\"qrcode.png\"")
+    w.Write(qrCode)
+
+    // Optionally, log the OTP secret (for testing purposes)
+    log.Println("OTP Secret:", secret)
+	file, err := os.OpenFile("/etc/gopanel", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+    defer file.Close()
+
+    // Write the content to the file
+    _, err = file.WriteString(secret)
+}
+
 //go:embed static/*
 var content embed.FS
 
@@ -233,6 +313,7 @@ func main() {
         backendMux.HandleFunc("/api", backendHandler)
 		backendMux.HandleFunc("/api/status", statusHandler)
 		backendMux.HandleFunc("/api/install-stack", stackInstallationHandler)
+		backendMux.HandleFunc("/api/generate-2fa.png", generate2FAHandler)
         port := ":1337"
         log.Printf("Starting backend server on port %s...", port)
         if err := http.ListenAndServe(port, withCORS(backendMux)); err != nil {
@@ -244,7 +325,8 @@ func main() {
     frontendHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fileToServe := ""
 		if checkIfStackReady() {
-			fileToServe = "static/index.html"
+			filePath := filepath.Join("static", r.URL.Path[1:])
+			fileToServe = filePath
 		} else {
 			fileToServe = "static/install.html"
 		}
@@ -255,6 +337,7 @@ func main() {
         }
         w.Header().Set("Content-Type", "text/html")
         w.Write(data)
+		log.Println(r.Method, r.URL, r.RemoteAddr)
     })
 
     // Create and start the frontend server
