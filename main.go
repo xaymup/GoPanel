@@ -10,8 +10,7 @@ import (
 	"io"
 )
 
-//go:embed static/index.html
-var content embed.FS
+
 
 func withCORS(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -213,7 +212,16 @@ func stackInstallationHandler(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Installation process initiated for packages: %v", requestData.Packages)
 }
 
+func checkIfStackReady () (bool) {
+	if checkIfInstalled("nginx") && checkIfInstalled("mariadb-server") && checkIfInstalled("php8.1-fpm") && checkIfInstalled("cron") {
+		return true
+	} else {
+		return false
+	}
+}
 
+//go:embed static/*
+var content embed.FS
 
 func main() {
     // Backend handler
@@ -234,12 +242,13 @@ func main() {
 
     // Frontend handler using embedded content
     frontendHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-
-
-
-
-        data, err := content.ReadFile("static/index.html")
+		fileToServe := ""
+		if checkIfStackReady() {
+			fileToServe = "static/index.html"
+		} else {
+			fileToServe = "static/install.html"
+		}
+        data, err := content.ReadFile(fileToServe)
         if err != nil {
             http.Error(w, "File not found", http.StatusNotFound)
             return
