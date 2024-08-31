@@ -20,7 +20,7 @@ GoPanel is a minimal server management panel written in Go. It is designed to su
 1. **Clone the Repository**:
 
     ```bash
-    git clone https://github.com/yourusername/gopanel.git
+    git clone https://github.com/xaymup/gopanel.git
     cd gopanel
     ```
 
