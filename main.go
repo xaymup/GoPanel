@@ -414,11 +414,6 @@ func generate2FAHandler(w http.ResponseWriter, r *http.Request) {
 	
 		// Optionally, log the OTP secret (for testing purposes)
 		log.Println("OTP Secret:", secret)
-		file, err := os.OpenFile("/etc/gopanel", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-		defer file.Close()
-	
-		// Write the content to the file
-		_, err = file.WriteString(secret)
     }
 
 }
@@ -445,41 +440,41 @@ func main() {
     }()
 
     // Frontend handler using embedded content
-    frontendHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fileToServe := ""
-		if checkIfStackReady() {
-			session, _ := store.Get(r, "session")
-			filePath := filepath.Join("static", r.URL.Path[1:])
-			
-			// Check if the user is authenticated
-			if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
-				if !fileExists(otpFile) {
-					fileToServe = "static/account.html"
-				} else {
-					fileToServe = "static/login.html"
-				}
+frontendHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	fileToServe := ""
+	if checkIfStackReady() {
+		session, _ := store.Get(r, "session")
+		filePath := filepath.Join("static", r.URL.Path[1:])
+		
+		// Check if the user is authenticated
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			if !fileExists(otpFile) {
+				fileToServe = "static/account.html"
 			} else {
-				fileToServe = filePath
+				fileToServe = "static/login.html"
 			}
 		} else {
-			fileToServe = "static/install.html"
+			fileToServe = filePath
 		}
-		input := map[string]interface{}{
-			"Title": "Home Page",
-		}
-		err := templates.ExecuteTemplate(w, fileToServe, input)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-        // data, err := content.ReadFile(fileToServe)
-        if err != nil {
-            http.Error(w, "File not found", http.StatusNotFound)
-            return
-        }
-        // w.Header().Set("Content-Type", "text/html")
-        // w.Write(data)
-		log.Println(r.Method, r.URL, r.RemoteAddr)
-    })
+	} else {
+		fileToServe = "static/install.html"
+	}
+	input := map[string]interface{}{
+		"Title": "Home Page",
+	}
+	err := templates.ExecuteTemplate(w, fileToServe, input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	// data, err := content.ReadFile(fileToServe)
+	if err != nil {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	// w.Header().Set("Content-Type", "text/html")
+	// w.Write(data)
+	log.Println(r.Method, r.URL, r.RemoteAddr)
+})
 
 	validateOTPHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

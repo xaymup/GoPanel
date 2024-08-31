@@ -4,22 +4,12 @@ import (
     "net/http"
 	"github.com/CloudyKit/jet/v6"
     "gopanel/internal/util"
-	"github.com/gorilla/sessions"
 	"log"
-	"encoding/json"
 	"fmt"
 	"strings"
 )
 
-var (
-	randomString, _ = util.GenerateSecretKey(16)
-    key   = []byte(randomString)
-    store = sessions.NewCookieStore(key)
-)
 
-type PinRequest struct {
-    PIN string `json:"pin"`
-}
 
 var views = jet.NewSet(
 	jet.NewOSFileSystemLoader("./web"), // Load templates from the "views" directory
@@ -104,50 +94,3 @@ func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL, r.RemoteAddr)
 }
 
-func ValidateOTPHandler(w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var pinReq PinRequest
-
-	// Decode the incoming JSON request
-	err := json.NewDecoder(r.Body).Decode(&pinReq)
-	if err != nil {
-		http.Error(w, "Error parsing JSON request", http.StatusBadRequest)
-		return
-	}
-
-	// Validate the OTP/PIN
-	valid, err := util.ValidateOTP(pinReq.PIN)
-	if err != nil {
-		http.Error(w, "Error validating OTP", http.StatusInternalServerError)
-		return
-	}
-
-	// Respond based on the validity of the OTP
-	if valid {
-		session, _ := store.Get(r, "session")
-		session.Values["authenticated"] = true
-		session.Options = &sessions.Options{
-			Path:     "/",
-			MaxAge:   3600, // 1 hour
-			HttpOnly: false, // Prevents JavaScript access
-			Secure:   false, // Set to true if using HTTPS
-			SameSite: http.SameSiteLaxMode, // Adjust as needed
-		}
-
-		err = session.Save(r, w)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OTP is valid!"))
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid OTP"))
-	}
-	log.Println(r.Method, r.URL, r.RemoteAddr)
-}

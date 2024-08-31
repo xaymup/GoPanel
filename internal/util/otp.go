@@ -29,15 +29,14 @@ func Generate2FAQRCode() ([]byte, string, error) {
     return qrCode, key.Secret(), nil
 }
 
-func ValidateOTP(otp string) (bool, error) {
+func ValidateOTP(otp, Secret string) (bool, error) {
 
     // Read the secret from the file
-    secret, err := ReadSecretFromFile()
-    if err != nil {
-        return false, err
-    }
-
+    // secret, err := ReadSecretFromFile()
+    // if err != nil {
+    //     return false, err
+    // }
     // Validate the OTP using the secret
-    valid := totp.Validate(otp, secret)
+    valid := totp.Validate(otp, Secret)
     return valid, nil
 }
