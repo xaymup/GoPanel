@@ -1,6 +1,8 @@
 {{extends "../templates/view.jet"}}
 {{import "../blocks/load-monitor.jet"}}
+{{import "../blocks/disk-usage.jet"}}
 {{block title()}}Home{{end}}
 {{ block container() }}
 {{ yield loadmonitor()}}
+{{ yield diskusage()}}
 {{ end }}

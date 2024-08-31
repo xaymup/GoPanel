@@ -6,55 +6,50 @@
 document.addEventListener('DOMContentLoaded', () => {
         // Define the chart options
         const options = {
-            series: [], // Initial empty series
-            chart: {
-                type: 'radialBar',
-                height: 240
+    chart: {
+        type: 'radialBar',
+        width: "255px"
+    },
+    title: {
+        text: 'System Load',
+        align: 'center'
+    },
+    labels: ['1 min', '5 min', '15 min'],
+    plotOptions: {
+        radialBar: {
+            offsetY: -10,
+            startAngle: -179.9,
+            endAngle: 179.9,
+            hollow: {
+                margin: 10,
+                size: '10%',
+                background: '#fff',
+                image: undefined
             },
-            title: {
-                text: 'System Load'
-            },
-            labels: ['1 min', '5 min', '15 min'],
-            plotOptions: {
-                radialBar: {
-                    offsetY: -10,
-                    startAngle: -179.9,
-                    endAngle: 179.9,
-                    hollow: {
-                        margin: 10,
-                        size: '10%',
-                        background: '#fff',
-                        image: undefined
-                    },
-                    track: {
-                        background: '#e7e7e7',
-                        strokeWidth: '100%',
-                        margin: 1 // margin is in px
-                    },
-                    dataLabels: {
-                        name: {
-                            show: true,
-                            fontSize: '22px',
-                            color: undefined,
-                            offsetY: -10
-                        },
-                        value: {
-                            show: true,
-                            fontSize: '16px',
-                            color: 'black',
-                            offsetY: 10,
-                            formatter: function (val) {
-                                return `${val}%`;
-                            }
-                        }
-                    }
-                }
+            track: {
+                background: '#e7e7e7',
+                strokeWidth: '100%',
+                margin: 1 // margin is in px
             }
-        };
+        }
+    },
+    colors: ['#FF4560', '#00E396', '#008FFB'], // Colors for each radial bar
+    legend: {
+        show: true,
+        floating: false,
+        markers: {
+            width: 10,
+            height: 10,
+            strokeColor: '#fff',
+            strokeWidth: 2,
+            radius: 12,
+        }
+    },
+};
 
         // Create the chart instance
-        const chart = new ApexCharts(document.querySelector("#chart"), options);
-        chart.render();
+        const loadChart = new ApexCharts(document.querySelector("#chart"), options);
+        loadChart.render();
 
         // Function to fetch data and update the chart
         function fetchDataAndUpdateChart() {
@@ -68,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ];
 
                     // Update the chart series
-                    chart.updateSeries(series);
+                    loadChart.updateSeries(series);
                 })
                 .catch(error => {
                     console.error('Error fetching data', error);

@@ -1,0 +1,40 @@
+{{ block diskusage() }}
+<div class="flex-1 mx-6">
+    <div class="flex bg-gray-100 rounded-lg max-w-xs" id="diskUsageChart"></div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const options = {
+        chart: {
+            type: 'pie',
+        },
+        labels: ['Used', 'Free'],
+        title: {
+            text: 'Disk Usage',
+            align: 'center'
+        }
+    };
+
+    const diskChart = new ApexCharts(document.querySelector("#diskUsageChart"), options);
+    diskChart.render();
+    function fetchDataAndUpdateChart() {
+            axios.get('http://localhost:1337/api/disk-usage')
+                .then(response => {
+                    const data = response.data;
+                    const series = [
+                        data.used / data.total * 100, // Convert to percentage
+                        data.free / data.total * 100// Convert to percentage
+                    ];
+
+                    // Update the chart series
+                    diskChart.updateSeries(series);
+                })
+                .catch(error => {
+                    console.error('Error fetching data', error);
+                });
+        }
+        fetchDataAndUpdateChart();
+});
+
+</script>
+{{ end }}

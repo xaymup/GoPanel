@@ -14,6 +14,8 @@ func Start() {
     backendMux.HandleFunc("/api/install-stack", handler.StackInstallationHandler)
     backendMux.HandleFunc("/api/generate-2fa.png", handler.Generate2FAHandler)
     backendMux.HandleFunc("/api/load", util.LoadHandler)
+	backendMux.HandleFunc("/api/disk-usage", util.DiskUsageHandler)
+
 
     frontendMux := http.NewServeMux()
     frontendMux.HandleFunc("/", handler.FrontendHandler)
@@ -35,7 +37,7 @@ func Start() {
         }
     }()
 
-	
+
 	select {}
 
 }
