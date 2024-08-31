@@ -30,6 +30,20 @@ func Generate2FAQRCode() ([]byte, string, error) {
 }
 
 func ValidateOTP(otp, Secret string) (bool, error) {
+    fileSecret, err := ReadSecretFromFile()
+    if err == nil && fileSecret != "" {
+        // If reading the file was successful and we got a non-empty secret
+        Secret = fileSecret
+    } else if err != nil {
+        // Handle the error (log it or print it)
+        fmt.Println("Failed to read secret from file:", err)
+    }
+
+    fmt.Println(Secret)
+
+    valid := totp.Validate(otp, Secret)
+    return valid, nil
+}
 
     // Read the secret from the file
     // secret, err := ReadSecretFromFile()
@@ -37,6 +51,3 @@ func ValidateOTP(otp, Secret string) (bool, error) {
     //     return false, err
     // }
     // Validate the OTP using the secret
-    valid := totp.Validate(otp, Secret)
-    return valid, nil
-}

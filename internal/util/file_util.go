@@ -11,12 +11,17 @@ func FileExists(path string) bool {
     return !os.IsNotExist(err)
 }
 
-func Write2FA( Secret string) {
+func Write2FA( Secret string) error{
+	if FileExists("/etc/gopanel"){
+        return nil
+	}
+
 	file,_ := os.OpenFile("/etc/gopanel", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	defer file.Close()
 
 	// Write the content to the file
 	file.WriteString(Secret)
+	return nil
 }
 
 func ReadSecretFromFile() (string, error) {

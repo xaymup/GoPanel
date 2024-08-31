@@ -1,0 +1,121 @@
+{{ extends "../base.jet" }}
+{{block title()}}Install{{end}}
+{{ block Content() }}
+<div>
+<h1 class="text-2xl font-bold mb-4">Welcome to GoPanel!</h1>
+<p class="text-gray-700 mb-5">Let's begin the installation of your stack shall we?</p>
+<ul id="status-list" class="list-disc pl-5 font-mono"></ul>
+<div class="flex justify-between mt-5 px-4">
+    <button id="install-button" class="transition-all bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300">
+        <span id="spinner" class="transition-all absolute animate-spin hidden">⏳</span>
+        <span id="install-button-text" class="transition-all ">Install missing components</span>
+    </button>
+    <a href="account.html"><button id="next-button" class="transition-all text-white bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:text-gray-300" disabled>
+        Next
+    </button></a>
+</div>
+</div>
+<script>
+const nextButton = document.getElementById('next-button');
+const installButton = document.getElementById('install-button');
+const spinner = document.getElementById('spinner');
+const installButtonText = document.getElementById('install-button-text');
+
+
+async function fetchStatus() {
+    try {
+        const response = await fetch('http://localhost:1337/api/status');
+        const data = await response.json();
+
+        const statusList = document.getElementById('status-list');
+        statusList.innerHTML = `
+            <li class="flex items-center mb-2">
+                <span class="w-5 h-5 flex items-center justify-center mr-2">
+                    ${data['nginx'] ? '✔️' : '❌'}
+                </span>
+                Nginx
+            </li>
+            <li class="flex items-center mb-2">
+                <span class="w-5 h-5 flex items-center justify-center mr-2 ${data['php8.1-fpm'] ? 'text-green-500' : 'text-red-500'}">
+                    ${data['php8.1-fpm'] ? '✔️' : '❌'}
+                </span>
+                PHP
+            </li>
+            <li class="flex items-center mb-2">
+                <span class="w-5 h-5 flex items-center justify-center mr-2 ${data['mariadb-server'] ? 'text-green-500' : 'text-red-500'}">
+                    ${data['mariadb-server'] ? '✔️' : '❌'}
+                </span>
+                MySQL
+            </li>
+            <li class="flex items-center">
+                <span class="w-5 h-5 flex items-center justify-center mr-2 ${data['cron'] ? 'text-green-500' : 'text-red-500'}">
+                    ${data['cron'] ? '✔️' : '❌'}
+                </span>
+                Cron
+            </li>
+        `;
+        const values = Object.values(data);
+        if (values.every(item => item === true)){
+            nextButton.disabled = false;
+            installButton.disabled = true;
+            spinner.classList.add('hidden');
+            installButtonText.textContent = "Done!";
+            installButtonText.classList.remove('ml-7');
+        }
+        else {
+            nextButton.disabled = true;
+        }
+    } catch (error) {
+        console.error('Error fetching status:', error);
+    }
+}
+
+async function checkAndInstallSoftware() {
+    installButton.disabled = true;
+    spinner.classList.remove('hidden');
+    installButtonText.classList.add('ml-7');
+    try {
+         // Fetch the status of installed software
+        const statusResponse = await fetch('http://localhost:1337/api/status');
+        if (!statusResponse.ok) {
+            throw new Error(`HTTP error! status: ${statusResponse.status}`);
+        }
+
+        const statusData = await statusResponse.json();
+        console.log('Status response:', statusData);
+
+        // Determine which packages need to be installed
+        const packagesToInstall = Object.keys(statusData).filter(pkg => !statusData[pkg]);
+
+        if (packagesToInstall.length > 0) {
+            // Send a request to install missing packages
+            const installResponse = await fetch('http://localhost:1337/api/install-stack', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ packages: packagesToInstall })
+            });
+
+        if (!installResponse.ok) {
+            throw new Error(`HTTP error! status: ${installResponse.status}`);
+        }
+
+        const result = await installResponse.text();
+        console.log('Install response:', result);
+    } else {
+        console.log('All packages are already installed.');
+    }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+document.getElementById('install-button').addEventListener('click', () => {
+    // Implement the installation logic or redirection here
+    checkAndInstallSoftware();
+});
+
+setInterval(fetchStatus, 5000);
+</script>
+{{ end }}

@@ -1,0 +1,85 @@
+{{ block loadmonitor() }}
+<div class="flex-1 mx-6">
+    <div class="flex bg-gray-100 rounded-lg max-w-xs" id="chart"></div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+        // Define the chart options
+        const options = {
+            series: [], // Initial empty series
+            chart: {
+                type: 'radialBar',
+                height: 240
+            },
+            title: {
+                text: 'System Load'
+            },
+            labels: ['1 min', '5 min', '15 min'],
+            plotOptions: {
+                radialBar: {
+                    offsetY: -10,
+                    startAngle: -179.9,
+                    endAngle: 179.9,
+                    hollow: {
+                        margin: 10,
+                        size: '10%',
+                        background: '#fff',
+                        image: undefined
+                    },
+                    track: {
+                        background: '#e7e7e7',
+                        strokeWidth: '100%',
+                        margin: 1 // margin is in px
+                    },
+                    dataLabels: {
+                        name: {
+                            show: true,
+                            fontSize: '22px',
+                            color: undefined,
+                            offsetY: -10
+                        },
+                        value: {
+                            show: true,
+                            fontSize: '16px',
+                            color: 'black',
+                            offsetY: 10,
+                            formatter: function (val) {
+                                return `${val}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Create the chart instance
+        const chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+
+        // Function to fetch data and update the chart
+        function fetchDataAndUpdateChart() {
+            axios.get('http://localhost:1337/api/load')
+                .then(response => {
+                    const data = response.data;
+                    const series = [
+                        data.load1 * (data.cores), // Convert to percentage
+                        data.load5 * (data.cores), // Convert to percentage
+                        data.load15 * (data.cores) // Convert to percentage
+                    ];
+
+                    // Update the chart series
+                    chart.updateSeries(series);
+                })
+                .catch(error => {
+                    console.error('Error fetching data', error);
+                });
+        }
+
+        // Initial data fetch and chart update
+        fetchDataAndUpdateChart();
+
+        // Set an interval to update the chart every 1 minute (60000 milliseconds)
+        setInterval(fetchDataAndUpdateChart, 5000);
+    });
+</script>
+{{ end }}

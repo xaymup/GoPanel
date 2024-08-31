@@ -2,6 +2,8 @@
 {{import "../blocks/login-box.jet"}}
 {{block title()}}Login{{end}}
 {{ block Content() }}
+<div>
 <h1 class="text-2xl font-bold mb-4">GoPanel Login</h1>
 {{yield loginbox()}}
+</div>
 {{ end }}

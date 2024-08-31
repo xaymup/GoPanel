@@ -1,0 +1,6 @@
+{{extends "../templates/view.jet"}}
+{{import "../blocks/load-monitor.jet"}}
+{{block title()}}Home{{end}}
+{{ block container() }}
+{{ yield loadmonitor()}}
+{{ end }}
