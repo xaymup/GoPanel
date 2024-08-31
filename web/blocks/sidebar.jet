@@ -1,3 +1,4 @@
+{{block sidebar()}}
 <div class="flex bg-white p-8 rounded-lg shadow-lg max-w-6xl w-full">
     <aside class="w-64 bg-gray-100 rounded-lg flex-shrink-0">
         <div class="p-4">
@@ -32,3 +33,5 @@
         </div>
     </aside>
 </div>
+{{ end }}
+

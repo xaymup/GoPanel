@@ -1,0 +1,6 @@
+{{extends "../base.jet"}}
+{{import "../templates/sidebar.jet"}}
+
+{{block Content()}}
+    {{yield sidebar()}}
+{{end}}
