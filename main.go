@@ -18,7 +18,15 @@ import (
     "encoding/base64"
 	"github.com/shirou/gopsutil/load"
 	"runtime"
+	"html/template"
 )
+
+// Embedding filesystem
+//go:embed static/*
+var content embed.FS
+
+// Initializing templates
+var templates = template.Must(template.ParseGlob("static/*.html"))
 
 type LoadAvg struct {
 	Cores  int 	   `json:"cores"`
@@ -415,8 +423,7 @@ func generate2FAHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//go:embed static/*
-var content embed.FS
+
 
 func main() {
     // Backend handler
@@ -457,13 +464,20 @@ func main() {
 		} else {
 			fileToServe = "static/install.html"
 		}
-        data, err := content.ReadFile(fileToServe)
+		input := map[string]interface{}{
+			"Title": "Home Page",
+		}
+		err := templates.ExecuteTemplate(w, fileToServe, input)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+        // data, err := content.ReadFile(fileToServe)
         if err != nil {
             http.Error(w, "File not found", http.StatusNotFound)
             return
         }
-        w.Header().Set("Content-Type", "text/html")
-        w.Write(data)
+        // w.Header().Set("Content-Type", "text/html")
+        // w.Write(data)
 		log.Println(r.Method, r.URL, r.RemoteAddr)
     })
 
