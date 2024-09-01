@@ -38,9 +38,6 @@ func ValidateOTP(otp, Secret string) (bool, error) {
         // Handle the error (log it or print it)
         fmt.Println("Failed to read secret from file:", err)
     }
-
-    fmt.Println(Secret)
-
     valid := totp.Validate(otp, Secret)
     return valid, nil
 }

@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Function to fetch data and update the chart
         function fetchDataAndUpdateChart() {
-            axios.get('http://localhost:1337/api/load')
+            axios.get('http://localhost:1337/api/load', {withCredentials: true})
                 .then(response => {
                     const data = response.data;
                     const series = [

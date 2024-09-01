@@ -19,7 +19,7 @@ var views = jet.NewSet(
 func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 	var templateName string
 	if util.CheckIfStackReady() {
-		session, _ := store.Get(r, "session")
+		session, _ := Store.Get(r, "session")
 		
 		// Check if the user is authenticated
 		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {

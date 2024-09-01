@@ -78,7 +78,7 @@
             resources.render();
 
             function fetchDataAndUpdateResChart() {
-            axios.get('http://localhost:1337/api/resource-usage')
+            axios.get('http://localhost:1337/api/resource-usage', {withCredentials: true})
                 .then(response => {
                     const data = response.data;
 

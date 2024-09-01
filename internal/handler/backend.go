@@ -13,7 +13,7 @@ import (
 var (
 	randomString, _ = util.GenerateSecretKey(16)
     key   = []byte(randomString)
-    store = sessions.NewCookieStore(key)
+    Store = sessions.NewCookieStore(key)
 	qrCode, Secret, err = util.Generate2FAQRCode()
 )
 
@@ -125,7 +125,7 @@ func ValidateOTPHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Respond based on the validity of the OTP
 	if valid {
-		session, _ := store.Get(r, "session")
+		session, _ := Store.Get(r, "session")
 		session.Values["authenticated"] = true
 		session.Options = &sessions.Options{
 			Path:     "/",
@@ -140,6 +140,9 @@ func ValidateOTPHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		log.Println("Succesful login", r.RemoteAddr)
+
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OTP is valid!"))
 		util.Write2FA(Secret)
