@@ -4,7 +4,7 @@
 {{ block Content() }}
 <div>
 <h1 class="text-2xl font-bold mb-4">Let's create an account for you!</h1>
-<img class="block mx-auto" src="http://localhost:1337/api/generate-2fa.png"></img>
+<img class="block mx-auto" src="http://localhost:8888/api/generate-2fa.png"></img>
 {{yield loginbox()}}
 </div>
 {{ end }}

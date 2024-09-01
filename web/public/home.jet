@@ -4,6 +4,7 @@
 {{import "../blocks/memory-usage.jet"}}
 {{block title()}}Home{{end}}
 {{ block container() }}
+<h1 class="flex text-3xl w-full px-3 h-12 font-bold text-gray-700">Welcome, Admin! 👋</h1>
 {{ yield loadmonitor()}}
 {{ yield diskusage()}}
 {{ yield memoryusage()}}

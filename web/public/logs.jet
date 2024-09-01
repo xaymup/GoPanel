@@ -1,5 +1,5 @@
 {{extends "../templates/view.jet"}}
-{{block title()}}File Manager{{end}}
+{{block title()}}Logs{{end}}
 {{ block container() }}
 
 {{ end }}

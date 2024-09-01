@@ -1,5 +1,5 @@
 {{extends "../templates/view.jet"}}
-{{block title()}}File Manager{{end}}
+{{block title()}}Crons{{end}}
 {{ block container() }}
 
 {{ end }}

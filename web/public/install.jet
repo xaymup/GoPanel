@@ -24,7 +24,7 @@ const installButtonText = document.getElementById('install-button-text');
 
 async function fetchStatus() {
     try {
-        const response = await fetch('http://localhost:1337/api/status');
+        const response = await fetch('http://localhost:8888/api/status');
         const data = await response.json();
 
         const statusList = document.getElementById('status-list');
@@ -76,7 +76,7 @@ async function checkAndInstallSoftware() {
     installButtonText.classList.add('ml-7');
     try {
          // Fetch the status of installed software
-        const statusResponse = await fetch('http://localhost:1337/api/status');
+        const statusResponse = await fetch('http://localhost:8888/api/status');
         if (!statusResponse.ok) {
             throw new Error(`HTTP error! status: ${statusResponse.status}`);
         }
@@ -89,7 +89,7 @@ async function checkAndInstallSoftware() {
 
         if (packagesToInstall.length > 0) {
             // Send a request to install missing packages
-            const installResponse = await fetch('http://localhost:1337/api/install-stack', {
+            const installResponse = await fetch('http://localhost:8888/api/install-stack', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

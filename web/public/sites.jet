@@ -1,0 +1,77 @@
+{{extends "../templates/view.jet"}}
+{{block title()}}Sites{{end}}
+{{ block container() }}
+<div class="flex-row ml-3">
+<div class="relative inline-block text-left">
+    <!-- Dropdown Button -->
+    <button type="button" class="transition-all min-w-[43rem] bg-white text-gray-700 py-2 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
+        Select an option  <svg class="w-2.5 h-2.5 ms-3 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+            </svg>
+    </button>
+    <!-- Dropdown Menu -->
+    <div id="dropdownMenu" class="transition-all absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
+        <ul class="py-1">
+          <li><a href="#" data-value="Option 1" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Option 1</a></li>
+          <li><a href="#" data-value="Option 2" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Option 2</a></li>
+          <li><a href="#" data-value="Option 3" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Option 3</a></li>
+        </ul>
+    </div>
+    <button type="button" class="bg-blue-500 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Create site
+    </button>
+</div>
+<div class="mt-6 flex flex-wrap">
+    <div class="flex-row max-w-xs px-2 py-2">
+        <div class="font-semibold">Site name: </div><p class="text-xs w-full py-2 px-3 text-gray-700" id="name">My awesome site <a href="#" class="mx-2">✏️</a></p>
+    </div>
+    <div class="flex-row max-w-xs px-2 py-2">
+        <div class="font-semibold">Domains: </div>
+        <ul class="text-xs">
+            <li class="text-gray-700 py-1 px-3 w-max">example.com<a href="#" class="mx-2">✖</a></li>
+              
+            <li class="text-gray-700 py-1 px-3 w-max">www.example.com<a href="#" class="mx-2">✖</a></li>
+        </ul>
+        <div class="flex-row">
+            <input class="flex-col text-xs mr-2 w-40 appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="domain" type="text" placeholder="example.com"><button class="bg-blue-500 text-white p-2 rounded-lg flex-col text-xs">Add</button>
+        </div>
+    </div>
+    <div class="flex-row max-w-xs px-2 py-2">
+        <div class="font-semibold">Root Directory: </div><p class="text-xs w-full py-2 px-3 text-gray-700" id="name">/var/www/site1 <a href="#" class="mx-2">✏️</a></p>
+    </div>
+    <div class="flex-row max-w-xs px-2 py-2">
+        <div class="font-semibold">PHP version: </div>    <button type="button" class="transition-all bg-white text-xs text-gray-700 py-2 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
+            Select an option  <svg class="w-2.5 h-2.5 ms-3 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                </svg>
+        </button>
+
+    </div>
+</div>
+  <script>
+    // Toggle dropdown menu visibility
+    document.getElementById('dropdownButton').addEventListener('click', function() {
+      const menu = document.getElementById('dropdownMenu');
+      menu.classList.toggle('hidden');
+    });
+
+    // Update button text with selected item and close dropdown
+    document.querySelectorAll('#dropdownMenu a').forEach(item => {
+      item.addEventListener('click', function(event) {
+        event.preventDefault();
+        const button = document.getElementById('dropdownButton');
+        button.textContent = this.getAttribute('data-value');
+        document.getElementById('dropdownMenu').classList.add('hidden');
+      });
+    });
+
+    // Close dropdown menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const button = document.getElementById('dropdownButton');
+      const menu = document.getElementById('dropdownMenu');
+      if (!button.contains(event.target) && !menu.contains(event.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+  </script>
+{{ end }}
