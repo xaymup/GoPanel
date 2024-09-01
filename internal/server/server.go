@@ -15,6 +15,7 @@ func Start() {
     backendMux.HandleFunc("/api/generate-2fa.png", handler.Generate2FAHandler)
     backendMux.HandleFunc("/api/load", util.LoadHandler)
 	backendMux.HandleFunc("/api/disk-usage", util.DiskUsageHandler)
+    backendMux.HandleFunc("/api/resource-usage", util.ResourceUtilHandler)
 
 
     frontendMux := http.NewServeMux()

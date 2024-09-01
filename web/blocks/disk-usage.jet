@@ -1,9 +1,14 @@
 {{ block diskusage() }}
-<div class="flex-row mx-3 h-48 bg-gray-100 mb-6 rounded-lg">
+<div class="flex-row mx-3 h-56 bg-gray-100 mb-6 rounded-lg">
     <h3 class="font-bold text-center mt-3">Disk usage</h3>
     <div id="diskUsageChart"></div>
+    <div class="text-center text-xs" id="disk"></div>
+
 </div>
 <script>
+                function bytesToGB(bytes) {
+      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + "GB";
+    }
 document.addEventListener('DOMContentLoaded', () => {
     var totalMemory = 23333;
     const options = {
@@ -12,9 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
             height: '75%'
         },
         labels: ['Used', 'Free'],
+        tooltip: {
+            enabled: false
+        }
     };
 
     const diskChart = new ApexCharts(document.querySelector("#diskUsageChart"), options);
+    const disk = document.querySelector('#disk');
     diskChart.render();
     function fetchDataAndUpdateChart() {
             axios.get('http://localhost:1337/api/disk-usage')
@@ -27,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Update the chart series
                     diskChart.updateSeries(series);
+                    disk.innerHTML = '<span class="font-bold">Available: </span>' + bytesToGB(data.total) + '<span class="font-bold"> Used: </span>' + bytesToGB(data.used) + '<span class="font-bold"> Free: </span>' + bytesToGB(data.free);
                 })
                 .catch(error => {
                     console.error('Error fetching data', error);

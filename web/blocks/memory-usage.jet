@@ -1,9 +1,13 @@
 {{ block memoryusage() }}
-<div class="flex-row mx-3 h-48 rounded-lg bg-gray-100 mb-6">
+<div class="flex-row mx-3 h-56 rounded-lg bg-gray-100 mb-6 pb-10">
     <h3 class="font-bold text-center mt-3">Resources</h3>
-    <div id="resources"></div>
+    <div class="px-7" id="resources"></div>
+    <div class="text-center text-xs" id="memory"></div>
 </div>
     <script>
+            function bytesToGB(bytes) {
+      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + "GB";
+    }
        document.addEventListener("DOMContentLoaded", function() {
             // Set up progress value
             // Configure ApexCharts options
@@ -23,7 +27,12 @@
       horizontal: true,
       columnWidth: '10%', // Adjust this percentage to control bar width and spacing
       barHeight: '50%', // Adjust the width of the bars (50% is default)
-      borderRadius: 4 // Optionally, you can make the bars rounded
+      borderRadius: 4, // Optionally, you can make the bars rounded
+      colors: {
+            backgroundBarColors: ['#e0e0e0'], // Background color behind the bars (if any)
+            backgroundBarOpacity: 1, // Opacity for the background bars
+            backgroundBarRadius: 4 // Radius for rounded corners of background bars
+          }
     }
   },
   series: [{
@@ -49,11 +58,49 @@
   },
   tooltip: {
         enabled: false // Disable tooltips
-      }
+    },
+    dataLabels: {
+        formatter: function (value) {
+          return `${value}%`; // Customize label text
+        },
+    }
 }
             // Render the chart
             var resources = new ApexCharts(document.querySelector("#resources"), resourcesOptions);
+            var memory = document.querySelector("#memory");
+
             resources.render();
-        });
+
+            function fetchDataAndUpdateResChart() {
+            axios.get('http://localhost:1337/api/resource-usage')
+                .then(response => {
+                    const data = response.data;
+
+                    var series = [{
+                        name: 'Usage',
+                        data: [
+                                { x: 'CPU', y: Math.round(data.cpu_usage)},
+                                { x: 'Memory', y: Math.round(data.memory_used / data.memory_total * 100) }
+                            ]}];
+
+                    // Update the chart series
+                    resources.updateSeries(series);
+                    memory.innerHTML = '<span class="font-bold">Available memory: </span>' + bytesToGB(data.memory_total);
+                })
+                .catch(error => {
+                    console.error('Error fetching data', error);
+                });
+        }
+
+        // Initial data fetch and chart update
+        fetchDataAndUpdateResChart();
+
+        // Set an interval to update the chart every 1 minute (60000 milliseconds)
+        setInterval(fetchDataAndUpdateResChart, 5000);
+        
+        
+        }
+    
+    );
     </script>
 {{ end }}
