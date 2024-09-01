@@ -2,7 +2,7 @@
 {{block title()}}Install{{end}}
 {{ block Content() }}
 <div>
-<h1 class="text-2xl font-bold mb-4">Welcome to GoPanel!</h1>
+<h1 class="text-2xl font-bold mb-4">Welcome!</h1>
 <p class="text-gray-700 mb-5">Let's begin the installation of your stack shall we?</p>
 <ul id="status-list" class="list-disc pl-5 font-mono"></ul>
 <div class="flex justify-between mt-5 px-4">

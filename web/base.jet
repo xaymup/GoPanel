@@ -7,13 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@latest/dist/apexcharts.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
 
 </head>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Lato', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
 <body class="bg-gray-800 flex items-center justify-center min-h-screen">
     <div class="flex bg-white p-8 rounded-lg shadow-lg max-w-6xl">
         {{ block Content() }}
         {{ end }}
     </div>
+      <p class="absolute bottom-0 right-0 text-4xl font-bold text-gray-700 p-4">GoPanel 0.1</p>
 </body>
 </html>
