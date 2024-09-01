@@ -2,6 +2,8 @@
 
 GoPanel is a minimal server management panel written in Go. It is designed to support LEMP (Linux, Nginx, MySQL/MariaDB, PHP) stacks and provides a streamlined solution for managing servers.
 
+![image](https://github.com/user-attachments/assets/688534cf-b5e1-4f98-8d3a-c9aece815289)
+
 ## Features
 
 - **Minimal Authentication Flow**: Very simple secure access with only two-factor authentication (2FA) to ensure that only authorized users can manage the server.
