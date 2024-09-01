@@ -1,0 +1,59 @@
+{{ block memoryusage() }}
+<div class="flex-row mx-3 h-48 rounded-lg bg-gray-100 mb-6">
+    <h3 class="font-bold text-center mt-3">Resources</h3>
+    <div id="resources"></div>
+</div>
+    <script>
+       document.addEventListener("DOMContentLoaded", function() {
+            // Set up progress value
+            // Configure ApexCharts options
+            var resourcesOptions= {
+  chart: {
+    type: 'bar',
+    height: '70%',
+    toolbar: {
+            show: false  // This hides the entire toolbar, including the download button
+        }
+  },
+  grid: {
+    show: false // Hides the grid lines for the entire chart
+  },
+  plotOptions: {
+    bar: {
+      horizontal: true,
+      columnWidth: '10%', // Adjust this percentage to control bar width and spacing
+      barHeight: '50%', // Adjust the width of the bars (50% is default)
+      borderRadius: 4 // Optionally, you can make the bars rounded
+    }
+  },
+  series: [{
+    data: [{
+      x: 'CPU',
+      y: 10
+    }, {
+      x: 'Memory',
+      y: 18
+    }]
+  }],
+  xaxis: {
+    max: 100,
+    labels: {
+      show: false // This hides the y-axis labels
+    },
+    axisBorder: {
+      show: false // Hides the border of the y-axis
+    },
+    axisTicks: {
+      show: false // Hides the ticks on the y-axis
+    }
+  },
+  tooltip: {
+        enabled: false // Disable tooltips
+      }
+}
+            // Render the chart
+            var resources = new ApexCharts(document.querySelector("#resources"), resourcesOptions);
+            resources.render();
+        });
+    </script>
+{{ end }}

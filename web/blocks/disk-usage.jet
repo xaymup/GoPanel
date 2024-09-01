@@ -1,18 +1,17 @@
 {{ block diskusage() }}
-<div class="flex-1 mx-6">
-    <div class="flex bg-gray-100 rounded-lg max-w-xs" id="diskUsageChart"></div>
+<div class="flex-row mx-3 h-48 bg-gray-100 mb-6 rounded-lg">
+    <h3 class="font-bold text-center mt-3">Disk usage</h3>
+    <div id="diskUsageChart"></div>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    var totalMemory = 23333;
     const options = {
         chart: {
-            type: 'pie',
+            type: 'donut',
+            height: '75%'
         },
         labels: ['Used', 'Free'],
-        title: {
-            text: 'Disk Usage',
-            align: 'center'
-        }
     };
 
     const diskChart = new ApexCharts(document.querySelector("#diskUsageChart"), options);

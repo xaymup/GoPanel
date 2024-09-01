@@ -1,18 +1,14 @@
 {{ block loadmonitor() }}
-<div class="flex-1 mx-6">
-    <div class="flex bg-gray-100 rounded-lg max-w-xs" id="chart"></div>
+<div class="flex-row mx-3 h-48 rounded-lg bg-gray-100 mb-6">
+    <h3 class="font-bold text-center mt-3">System load</h3>
+    <div id="chart"></div>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
         // Define the chart options
         const options = {
     chart: {
-        type: 'radialBar',
-        width: "255px"
-    },
-    title: {
-        text: 'System Load',
-        align: 'center'
+        type: 'radialBar'
     },
     labels: ['1 min', '5 min', '15 min'],
     plotOptions: {

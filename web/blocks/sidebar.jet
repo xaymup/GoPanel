@@ -1,5 +1,5 @@
 {{block sidebar()}}
-<aside class="w-64 bg-gray-100 rounded-lg flex-shrink-0">
+<aside class="w-64 bg-gray-100 rounded-lg flex-shrink-0 mr-3">
     <div class="p-4">
         <nav>
             <ul class="space-y-2">
