@@ -29,9 +29,15 @@ func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			path := strings.TrimPrefix(r.URL.Path, "/")
-			if path == "" {
-				path = "home" // default template (e.g., / -> index.jet)
+
+			parts := strings.Split(path, "/")
+
+			if parts[0] == "" {
+				path = "/home" // default template (e.g., / -> index.jet)
+			} else {
+				path = parts[0]
 			}
+
 			templateName = fmt.Sprintf("/public/%s.jet", path)
 		}
 	} else {
@@ -77,7 +83,7 @@ func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := views.GetTemplate(templateName)
     if err != nil {
-        http.Error(w, fmt.Sprintf("Template not found: %s", err), http.StatusNotFound)
+        http.Redirect(w, r, "/", http.StatusFound)
         return
     }
 

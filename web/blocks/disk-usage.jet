@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Update the chart series
                     diskChart.updateSeries(series);
-                    diskBar.innerHTML = '<span class="text-gray-500 font-semibold">Available: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.total) + '</span>' + '<span class="text-gray-500 font-semibold"> Used: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.used) + '</span>' + '<span class="text-gray-500 font-semibold"> Free: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.free) + '</span>';
+                    diskBar.innerHTML = '<span class="text-gray-500 font-semibold">Total: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.total) + '</span>' + '<span class="text-gray-500 font-semibold"> Used: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.used) + '</span>' + '<span class="text-gray-500 font-semibold"> Free: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.free) + '</span>';
                 })
                 .catch(error => {
                     console.error('Error fetching data', error);

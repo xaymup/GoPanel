@@ -95,7 +95,7 @@
 
                     // Update the chart series
                     resources.updateSeries(series);
-                    memory.innerHTML = '<span class="font-semibold text-gray-500">Available memory: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.memory_total) + '</span>';
+                    memory.innerHTML = '<span class="font-semibold text-gray-500">Total: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.memory_total) + '</span>' + '<span class="font-semibold text-gray-500">Used: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.memory_used) + '</span>' + '<span class="font-semibold text-gray-500">Free: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + bytesToGB(data.memory_free) + '</span>';
                 })
                 .catch(error => {
                     console.error('Error fetching data', error);

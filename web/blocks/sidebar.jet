@@ -4,7 +4,7 @@
         <nav>
             <ul class="space-y-2">
                 <li>
-                    <a href="/home" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">📊 Dashboard</a>
+                    <a href="/" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">📊 Dashboard</a>
                 </li>
                 <li>
                     <a href="/sites" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">🌐 Sites</a>
@@ -34,7 +34,9 @@
 <script>
 function highlightCurrentLink() {
     // Get the current URI (excluding any query parameters)
-    const currentUri = window.location.pathname + window.location.search;
+    const currentUri = "/" + window.location.pathname.split("/")[1];
+
+    console.log(currentUri);
 
     // Select all anchor tags
     const links = document.querySelectorAll('a');

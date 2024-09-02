@@ -86,7 +86,12 @@ async function validateOTP() {
             document.getElementById("validate-otp").classList.remove('bg-blue-500','hover:bg-blue-600','focus:ring-blue-500');
             document.getElementById("validate-otp").classList.add('bg-green-500','hover:bg-green-600','focus:ring-green-500');
             document.getElementById("validate-otp").textContent = "Access granted!";
-            setTimeout(function() {window.location.href = 'home';}, 1000); // 1000 milliseconds = 1 second
+            setTimeout(function() {if (window.location.pathname != "/login") {
+    window.location.href = window.location.pathname;
+} else {
+    // Otherwise, redirect to the home page "/"
+    window.location.href = "/";
+}}, 1000); // 1000 milliseconds = 1 second
 
         } else {
             document.getElementById("validate-otp").textContent = "Invalid OTP!";

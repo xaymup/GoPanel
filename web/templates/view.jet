@@ -2,7 +2,7 @@
 {{import "../blocks/sidebar.jet"}}
 {{block Content()}}
     {{yield sidebar()}}
-    <div class="flex flex-wrap">
+    <div id="app" class="flex flex-wrap">
     {{yield container()}}
     </div>
 {{end}}

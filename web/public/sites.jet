@@ -1,26 +1,28 @@
 {{extends "../templates/view.jet"}}
 {{block title()}}Sites{{end}}
 {{ block container() }}
-<div id="app" class="flex-row ml-3">
-<div class="relative inline-block text-left">
-    <button type="button"  @click="toggleDropdown" ref="dropdown" class="transition-all min-w-[43rem] bg-white text-gray-700 py-2 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
-                        <span v-if="selectedItem" v-text="selectedItem.site_name"></span>
-                  <span v-else>Select an item</span><svg class="w-2.5 h-2.5 ms-3 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-            </svg>
-    </button>
-    <!-- Dropdown Menu -->
-    <div id="dropdownMenu" v-if="isDropdownVisible" class="absolute min-w-[43rem] z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
-    <ul v-for="site in sites" :key="site.id" @click="selectItem(site)" class="text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
-      <li>
-        <a v-text="site.site_name" href="#" class="transition-all block px-4 py-2 hover:bg-gray-100"></a>
-      </li>
-    </ul>
-    </div>
-    <button type="button" class="bg-blue-500 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-        Create site
-    </button>
-</div>
+<div class="flex-row ml-3">
+  <div class="relative inline-block flex justify-between text-left">
+      <button type="button"  @click="toggleDropdown" ref="dropdown" class="transition-all text-sm min-w-[13rem] bg-white text-gray-700 py-2 px-4 border-2 border-gray-200 text-left rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
+          <div class="flex justify-between">
+              <span v-if="selectedItem" v-text="selectedItem.site_name"></span>
+              <span v-else> Select an item</span>
+              <svg class="mt-1 w-2.5 h-2.5 ms-3 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+              </svg>
+          </div>
+      </button>
+      <div id="dropdownMenu" v-if="isDropdownVisible" class="absolute min-w-[13rem] z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
+        <ul v-for="site in sites" :key="site.id" @click="selectItem(site)" class="text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
+          <li>
+            <a v-text="site.site_name" href="#" class="transition-all block px-4 py-2 hover:bg-gray-100"></a>
+          </li>
+        </ul>
+      </div>
+      <button type="button" class="bg-blue-500 text-sm text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          Create site
+      </button>
+  </div>
 <div class="mt-6 flex flex-wrap">
     <div class="flex-row max-w-xs px-2 py-2">
         <div class="font-semibold">Site name: </div><p class="text-xs w-full py-2 px-3 text-gray-700" id="name">My awesome site <a href="#" class="mx-2">✏️</a></p>
@@ -45,10 +47,10 @@
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
                 </svg>
         </button>
-
     </div>
 </div>
-  <script>
+
+<script>
    new Vue({
       el: '#app',
       data() {
@@ -101,5 +103,5 @@
         document.removeEventListener('click', this.handleClickOutside);
       }
     });
-  </script>
+</script>
 {{ end }}

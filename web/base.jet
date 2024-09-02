@@ -21,10 +21,11 @@
     }
  </script>
 <body class="bg-gray-800 flex items-center justify-center min-h-screen">
-    <div class="flex bg-white p-8 rounded-lg shadow-lg max-w-6xl">
+    <div id="app" class="flex bg-white p-8 rounded-lg shadow-lg max-w-6xl">
         {{ block Content() }}
         {{ end }}
     </div>
-      <p class="absolute bottom-0 right-0 text-4xl font-bold text-gray-700 p-4">GoPanel 0.1</p>
+    <span class="absolute bottom-0 right-0 text-4xl font-bold text-gray-700 p-4">GoPanel 0.1</span>
 </body>
+
 </html>
