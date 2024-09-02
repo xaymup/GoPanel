@@ -5,8 +5,8 @@
   <div class="relative inline-block flex justify-between text-left">
       <button type="button"  @click="toggleDropdown" ref="dropdown" class="transition-all text-sm min-w-[13rem] bg-white text-gray-700 py-2 px-4 border-2 border-gray-200 text-left rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
           <div class="flex justify-between">
-              <span v-if="selectedItem" v-text="selectedItem.site_name"></span>
-              <span v-else> Select an item</span>
+              <span v-if="selectedItem.site_name" v-text="selectedItem.site_name"></span>
+              <span v-else>Select site</span>
               <svg class="mt-1 w-2.5 h-2.5 ms-3 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
               <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
               </svg>
@@ -15,31 +15,37 @@
       <div id="dropdownMenu" v-if="isDropdownVisible" class="absolute min-w-[13rem] z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
         <ul v-for="site in sites" :key="site.id" @click="selectItem(site)" class="text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
           <li>
-            <a v-text="site.site_name" href="#" class="transition-all block px-4 py-2 hover:bg-gray-100"></a>
+            <a v-text="site.site_name" class="transition-all block px-4 py-2 hover:bg-gray-100"></a>
           </li>
         </ul>
       </div>
-      <button type="button" class="bg-blue-500 text-sm text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          Create site
-      </button>
+      <div class="flex flex-row">
+      <button @click="enableTextField" class="flex text-xs m-2">✖ Delete</button>
+      <button @click="enableTextField" class="flex text-xs m-2">✏️ Edit</button>
+      <button type="button" class="flex text-xs m-2">➕ Create</button>
+      </div>
   </div>
-<div class="mt-6 flex flex-wrap">
-    <div class="flex-row max-w-xs px-2 py-2">
-        <div class="font-semibold">Site name: </div><p class="text-xs w-full py-2 px-3 text-gray-700" id="name">My awesome site <a href="#" class="mx-2">✏️</a></p>
-    </div>
-    <div class="flex-row max-w-xs px-2 py-2">
-        <div class="font-semibold">Domains: </div>
-        <ul class="text-xs">
-            <li class="text-gray-700 py-1 px-3 w-max">example.com<a href="#" class="mx-2">✖</a></li>
-              
-            <li class="text-gray-700 py-1 px-3 w-max">www.example.com<a href="#" class="mx-2">✖</a></li>
-        </ul>
-        <div class="flex-row">
-            <input class="flex-col text-xs mr-2 w-40 appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="domain" type="text" placeholder="example.com"><button class="bg-blue-500 text-white p-2 rounded-lg flex-col text-xs">Add</button>
+<div v-if="selectedItem.site_name" class="mt-6 flex flex-wrap">
+    <div class="flex-col flex max-w-xs px-2 py-2">      
+        <div class="flex-row inline-block font-semibold">Site name: </div>
+        <div class="flex flex-nowrap">
+          <input type="text" v-model="selectedItem.site_name" class="flex text-xs w-full py-2 px-3 text-gray-700" id="name" :disabled="isDisabled">
         </div>
     </div>
-    <div class="flex-row max-w-xs px-2 py-2">
-        <div class="font-semibold">Root Directory: </div><p class="text-xs w-full py-2 px-3 text-gray-700" id="name">/var/www/site1 <a href="#" class="mx-2">✏️</a></p>
+    <div class="flex-col flex max-w-xs px-2 py-2">
+        <div class="flex-row font-semibold inline-block">Domains: </div>
+        <div v-for="domain in selectedItem.domains" :key="domain.id" class="flex-row flex">
+            <div class="flex flex-row flex-nowrap"><input type="url" v-model="domain" class="flex text-xs w-full py-2 px-3 text-gray-700" id="name" :disabled="isDisabled"></div>
+        </div>
+        <div class="flex-row">
+          <input class="flex-col text-xs mr-2 w-40 appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="domain" type="text" placeholder="example.com"><button class="bg-blue-500 text-white p-2 rounded-lg flex-col text-xs">Add</button>
+      </div>
+    </div>
+    <div class="flex-col flex max-w-xs px-2 py-2">
+        <div class="flex-row flex font-semibold inline-block">Root Directory: </div>
+
+          <div class="flex flex-col flex-nowrap"><input v-model="selectedItem.path" class="flex text-xs w-full py-2 px-3 text-gray-700" id="path" :disabled="isDisabled"></div>
+
     </div>
     <div class="flex-row max-w-xs px-2 py-2">
         <div class="font-semibold">PHP version: </div>    <button type="button" class="transition-all bg-white text-xs text-gray-700 py-2 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
@@ -49,6 +55,7 @@
         </button>
     </div>
 </div>
+<div class="w-[48.2rem]" v-else></div>
 
 <script>
    new Vue({
@@ -56,8 +63,9 @@
       data() {
         return {
           isDropdownVisible: false,
-          selectedItem: null,
-          sites: []
+          selectedItem: {},
+          sites: [],
+          isDisabled: true
         };
       },
       methods: {
@@ -81,9 +89,17 @@
         toggleDropdown() {
           this.isDropdownVisible = !this.isDropdownVisible;
         },
+        enableTextField() {
+          this.isDisabled = false;
+        },
         selectItem(site) {
           this.selectedItem = site;
+                  console.log(site.site_name);
+                  history.pushState(null, '', "/sites/" + site.site_name.replace(/ /g, '_'));
+
+
           this.isDropdownVisible = false;
+          // window.location.href = "/sites/" + site.site_name.replace(/ /g, '_');
         },
         handleClickOutside(event) {
           if (this.$refs.dropdown && !this.$refs.dropdown.contains(event.target)) {
@@ -91,13 +107,35 @@
             }
         }
       },
+      async created() {
+        await this.fetchListItems();
+
+
+        const siteNameFromPath = window.location.pathname.split("/")[2].replace(/_/g, ' ');
+        // history.pushState(null, '', "/sites/" + siteNameFromPath);
+        this.selectedItem = this.sites.find(obj => obj.site_name === window.location.pathname.split("/")[2].replace(/_/g, ' '));
+
+
+
+      },
+      // async beforeMount () {
+      // // console.log(history.state.split("/"));
+
+      //           await this.fetchListItems();
+      //     //       if (history.state.split("/").length === 2) {
+      //     //         const siteNameFromPath = this.sites[0]["site_name"].replace(/ /g, '_')
+      //     // history.pushState(null, '', "/sites/" + siteNameFromPath);
+
+      //     // this.selectedItem = this.sites.find(obj => obj.site_name === siteNameFromPath);
+
+
+
+        
+
+      // },
       mounted() {
-        this.fetchListItems();
-        console.log(this.sites.length);
-
-        setTimeout(() => {this.selectItem(this.sites[0]);}, 200);
-
         document.addEventListener('click', this.handleClickOutside);
+
       },
       beforeDestroy() {
         document.removeEventListener('click', this.handleClickOutside);
