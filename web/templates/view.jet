@@ -3,7 +3,6 @@
 {{block Content()}}
     {{yield sidebar()}}
     <div class="flex flex-wrap">
-    <h1 class="flex text-3xl w-full px-3 h-12 font-bold text-gray-700">Welcome, Admin! 👋</h1>
     {{yield container()}}
     </div>
 {{end}}

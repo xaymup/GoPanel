@@ -10,17 +10,17 @@ import (
 func Start() {
     backendMux := http.NewServeMux()
     backendMux.HandleFunc("/api", handler.BackendHandler)
-    backendMux.HandleFunc("/api/status", handler.StatusHandler)
-    backendMux.HandleFunc("/api/install-stack", handler.StackInstallationHandler)
-    backendMux.HandleFunc("/api/generate-2fa.png", handler.Generate2FAHandler)
     backendMux.HandleFunc("/api/load", util.LoadHandler)
 	backendMux.HandleFunc("/api/disk-usage", util.DiskUsageHandler)
     backendMux.HandleFunc("/api/resource-usage", util.ResourceUtilHandler)
-
+    backendMux.HandleFunc("/api/list-sites", util.ListSites)
 
     frontendMux := http.NewServeMux()
     frontendMux.HandleFunc("/", handler.FrontendHandler)
     frontendMux.HandleFunc("/validate-otp", handler.ValidateOTPHandler)
+    frontendMux.HandleFunc("/api/status", handler.StatusHandler)
+    frontendMux.HandleFunc("/api/install-stack", handler.StackInstallationHandler)
+    frontendMux.HandleFunc("/api/generate-2fa.png", handler.Generate2FAHandler)
 
     go func() {
         port := ":1337"

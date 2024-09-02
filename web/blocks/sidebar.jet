@@ -1,28 +1,28 @@
 {{block sidebar()}}
-<aside class="w-64 bg-gray-100 rounded-lg flex-shrink-0 mr-3">
+<aside class="w-64 bg-gray-100 rounded-lg flex-shrink-0 mr-3 shadow">
     <div class="p-4">
         <nav>
             <ul class="space-y-2">
                 <li>
-                    <a href="#" class="transition-all block px-4 p-1 text-lg bg-gray-200 hover:bg-gray-300 rounded">📊 Dashboard</a>
+                    <a href="/home" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">📊 Dashboard</a>
                 </li>
                 <li>
-                    <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">🌐 Sites</a>
+                    <a href="/sites" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">🌐 Sites</a>
                 </li>
                 <li>
-                    <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">📁 File Manager</a>
+                    <a href="/file-manager" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">📁 File Manager</a>
                     </li>
                 <li>
-                    <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">↪️ Redirects</a>
+                    <a href="/redirects" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">↪️ Redirects</a>
                 </li>
                 <li>
-                    <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">⏰ Crons</a>
+                    <a href="/crons" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">⏰ Crons</a>
                 </li>
                 <li>
-                    <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">📜 Logs</a>
+                    <a href="/logs" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">📜 Logs</a>
                 </li>
                 <li>
-                    <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">🛠️ Server Managment</a>
+                    <a href="/server-managment" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded">🛠️ Server Managment</a>
                 </li>
                 <li>
                     <a href="#" class="transition-all block px-4 p-1 text-lg hover:bg-gray-300 rounded" onclick="deleteSessionCookie('session'); return false;">👋 Logout</a>
@@ -32,6 +32,30 @@
     </div>
 </aside>
 <script>
+function highlightCurrentLink() {
+    // Get the current URI (excluding any query parameters)
+    const currentUri = window.location.pathname + window.location.search;
+
+    // Select all anchor tags
+    const links = document.querySelectorAll('a');
+
+    // Loop through all anchor tags
+    links.forEach(link => {
+        // Get the href attribute and resolve it to an absolute URI
+        const href = link.getAttribute('href');
+
+        // Check if the href matches the current URI
+        if (href === currentUri) {
+            // Add the class 'bg-gray-200' to the matching link
+            link.classList.add('bg-gray-200');
+        }
+    });
+}
+
+// Call the function to apply the class to the matching link
+highlightCurrentLink();
+
+
 function deleteSessionCookie(name) {
             document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                 window.location.href = '/'; // Redirect to home or login page

@@ -1,9 +1,13 @@
-{{ block loadmonitor() }}
-<div class="flex-row mx-3 h-56 rounded-lg bg-gray-100 mb-6">
-    <h3 class="text-gray-600 font-bold text-center mt-3">System load</h3>
-    <div id="chart"></div>
-    <div class="text-center text-xs" id="load"></div>
-</div>
+{{import "../templates/widget.jet"}}
+
+{{ block loadmonitor()}}
+
+
+    {{ widgetTitle := "System Load" }}
+    {{ infobar := "loadBar" }}
+    {{ chart := "loadChart" }}
+    {{ yield Widget() }}
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
         // Define the chart options
@@ -45,8 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
 };
 
         // Create the chart instance
-        const loadChart = new ApexCharts(document.querySelector("#chart"), options);
-        const load = document.querySelector('#load');
+        const loadChart = new ApexCharts(document.querySelector("#loadChart"), options);
+        const load = document.querySelector('#loadBar');
         loadChart.render();
 
         // Function to fetch data and update the chart
@@ -62,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Update the chart series
                     loadChart.updateSeries(series);
-                    load.innerHTML = '<span class="text-gray-500 font-bold">Load average: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-bold text-gray-600">' + data.load1 + '</span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-bold text-gray-600">' + data.load5 + '</span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-bold text-gray-600">' + data.load15 + '</span>';
+                    load.innerHTML = '<span class="text-gray-500 font-semibold">Load average: </span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + data.load1 + '</span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + data.load5 + '</span>' + '<span class="mx-1 p-1 rounded-md bg-gray-200 font-semibold text-gray-600">' + data.load15 + '</span>';
                 })
                 .catch(error => {
                     console.error('Error fetching data', error);

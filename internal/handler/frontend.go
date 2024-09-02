@@ -9,10 +9,8 @@ import (
 	"strings"
 )
 
-
-
 var views = jet.NewSet(
-	jet.NewOSFileSystemLoader("./web"), // Load templates from the "views" directory
+	jet.NewOSFileSystemLoader("./web"),
 	jet.InDevelopmentMode(),              // Use in development mode to auto-reload templates
 )
 

@@ -1,8 +1,7 @@
 package main
 
 import (
-    "gopanel/internal/server"
-)
+    "gopanel/internal/server")
 
 func main() {
     server.Start()

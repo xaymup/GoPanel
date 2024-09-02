@@ -1,21 +1,21 @@
 {{extends "../templates/view.jet"}}
 {{block title()}}Sites{{end}}
 {{ block container() }}
-<div class="flex-row ml-3">
+<div id="app" class="flex-row ml-3">
 <div class="relative inline-block text-left">
-    <!-- Dropdown Button -->
-    <button type="button" class="transition-all min-w-[43rem] bg-white text-gray-700 py-2 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
-        Select an option  <svg class="w-2.5 h-2.5 ms-3 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+    <button type="button"  @click="toggleDropdown" ref="dropdown" class="transition-all min-w-[43rem] bg-white text-gray-700 py-2 px-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" id="dropdownButton">
+                        <span v-if="selectedItem" v-text="selectedItem.site_name"></span>
+                  <span v-else>Select an item</span><svg class="w-2.5 h-2.5 ms-3 inline" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
             </svg>
     </button>
     <!-- Dropdown Menu -->
-    <div id="dropdownMenu" class="transition-all absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg hidden">
-        <ul class="py-1">
-          <li><a href="#" data-value="Option 1" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Option 1</a></li>
-          <li><a href="#" data-value="Option 2" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Option 2</a></li>
-          <li><a href="#" data-value="Option 3" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Option 3</a></li>
-        </ul>
+    <div id="dropdownMenu" v-if="isDropdownVisible" class="absolute min-w-[43rem] z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44">
+    <ul v-for="site in sites" :key="site.id" @click="selectItem(site)" class="text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
+      <li>
+        <a v-text="site.site_name" href="#" class="transition-all block px-4 py-2 hover:bg-gray-100"></a>
+      </li>
+    </ul>
     </div>
     <button type="button" class="bg-blue-500 text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
         Create site
@@ -49,28 +49,56 @@
     </div>
 </div>
   <script>
-    // Toggle dropdown menu visibility
-    document.getElementById('dropdownButton').addEventListener('click', function() {
-      const menu = document.getElementById('dropdownMenu');
-      menu.classList.toggle('hidden');
-    });
+   new Vue({
+      el: '#app',
+      data() {
+        return {
+          isDropdownVisible: false,
+          selectedItem: null,
+          sites: []
+        };
+      },
+      methods: {
+        async fetchListItems() {
+          try {
+            const response = await fetch('http://localhost:1337/api/list-sites', {
+              method: 'GET',
+              credentials: 'include' // Include credentials with the request
+            });
 
-    // Update button text with selected item and close dropdown
-    document.querySelectorAll('#dropdownMenu a').forEach(item => {
-      item.addEventListener('click', function(event) {
-        event.preventDefault();
-        const button = document.getElementById('dropdownButton');
-        button.textContent = this.getAttribute('data-value');
-        document.getElementById('dropdownMenu').classList.add('hidden');
-      });
-    });
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
 
-    // Close dropdown menu when clicking outside
-    document.addEventListener('click', function(event) {
-      const button = document.getElementById('dropdownButton');
-      const menu = document.getElementById('dropdownMenu');
-      if (!button.contains(event.target) && !menu.contains(event.target)) {
-        menu.classList.add('hidden');
+            const sites = await response.json();
+            this.sites = sites;
+          } catch (error) {
+            console.error('Error fetching the list items:', error);
+          }
+        },
+        toggleDropdown() {
+          this.isDropdownVisible = !this.isDropdownVisible;
+        },
+        selectItem(site) {
+          this.selectedItem = site;
+          this.isDropdownVisible = false;
+        },
+        handleClickOutside(event) {
+          if (this.$refs.dropdown && !this.$refs.dropdown.contains(event.target)) {
+            this.isDropdownVisible = false;
+            }
+        }
+      },
+      mounted() {
+        this.fetchListItems();
+        console.log(this.sites.length);
+
+        setTimeout(() => {this.selectItem(this.sites[0]);}, 200);
+
+        document.addEventListener('click', this.handleClickOutside);
+      },
+      beforeDestroy() {
+        document.removeEventListener('click', this.handleClickOutside);
       }
     });
   </script>
