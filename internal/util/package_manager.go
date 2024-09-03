@@ -6,6 +6,7 @@ import (
 	"log"
 )
 
+
 func detectPackageManager() (string, error) {
 
 	log.Println("Detecting current package manager")
@@ -26,11 +27,12 @@ func detectPackageManager() (string, error) {
 	return "", fmt.Errorf("no supported package manager found")
 }
 
+
+var pm,_ = detectPackageManager()
+
+
 func pkgManager(action, software string) error {
-	pm, err := detectPackageManager()
-	if err != nil {
-		return err
-	}
+
 
 	var cmd *exec.Cmd
 	var queryCmd string
@@ -114,10 +116,10 @@ func pkgManager(action, software string) error {
 		if err != nil {
 			return err
 		} else {
-			log.Println("Running package manager %s", cmd)
 			return nil
 		}
 	}
-	return err;
+	log.Println("Running command", cmd)
+	return cmd.Run();
 }
 

@@ -14,14 +14,13 @@ import (
 
 // var views = web.GetSet()
 
-
-
+var developmentMode = cmd.GetMode()
 
 func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 
 	var templateName string
-	// if util.CheckIfStackReady() {
-	if true{ 
+	if util.CheckIfStackReady() {
+	// if stackStatus{ 
 		session, _ := Store.Get(r, "session")
 		
 		// Check if the user is authenticated
@@ -51,7 +50,7 @@ func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 
 	var views *jet.Set
 
-	if cmd.GetMode() {
+	if developmentMode {
 		views = jet.NewSet(
 			jet.NewOSFileSystemLoader("./web"), // Load templates from the "templates" directory
 			jet.InDevelopmentMode(),                  // Disable caching for development mode
