@@ -1,6 +1,9 @@
 {{extends "../templates/view.jet"}}
 {{block title()}}Sites{{end}}
 {{ block container() }}
+
+
+
 <div class="flex-row ml-3">
   <div class="relative inline-block flex justify-between text-left">
       <button type="button"  @click="toggleDropdown" ref="dropdown" class="transition-all text-sm min-w-[13rem] bg-white text-gray-700 py-2 px-4 border-2 border-gray-200 text-left rounded-lg outline-none" id="dropdownButton">
@@ -13,17 +16,28 @@
           </div>
       </button>
       <div class="flex flex-row">
-        <button @click="enableTextField" class="flex text-xs m-2">✖ Delete</button>
         <button v-if="isDisabled" @click="enableTextField" class="flex text-xs m-2">✏️ Edit</button>
         <button v-else="isDisabled" @click="disableTextField" class="flex text-xs m-2">💾 Save</button>
+        <button @click="enableTextField" class="flex text-xs m-2">✖ Delete</button>
         <button type="button" class="flex text-xs m-2">➕ Create</button>
       </div>
 </div>
+<transition
+@before-enter="beforeEnter"
+@enter="enter"
+@leave="leave">
 <div id="dropdownMenu" v-if="isDropdownVisible" class="min-w-[13rem] shadow absolute z-10 bg-white divide-y divide-gray-100 border-1 border-blue-500 rounded-lg">
   <div v-for="site in sites" :key="site.id" @click="selectItem(site)" class="text-sm text-gray-700" aria-labelledby="dropdownDefaultButton">
       <a v-text="site.site_name" class="font-semibold cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
   </div>
 </div>
+</transition>
+
+<transition
+
+@before-enter="beforeEnter"
+@enter="enter"
+@leave="leave">
 <div v-if="selectedItem.site_name" class="mt-6 flex flex-wrap">
     <div class="flex-col flex max-w-xs px-2 py-2">      
         <div class="flex-row inline-block font-semibold">Site Name: </div>
@@ -33,11 +47,11 @@
     </div>
     <div class="flex-col flex max-w-xs px-2 py-2">
         <div class="flex-row font-semibold inline-block">Domains: </div>
-        <div v-for="domain in selectedItem.domains" :key="domain.id" class="flex-row flex">
-            <div class="flex flex-row flex-nowrap"><input type="url" v-model="domain" class="disabled:border-0 disabled:bg-white flex text-xs w-full py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="name" :disabled="isDisabled"></div>
+        <div v-for="(domain, index) in selectedItem.domains" :key="domain.id" class="flex-row flex">
+            <div class="flex flex-row flex-nowrap"><input type="url" v-model="domain" class="disabled:border-0 disabled:bg-white flex text-xs w-full py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="name" :disabled="isDisabled"></div><button @click="removeDomain(index)" class="flex-col text-xs w-4" :hidden="isDisabled">✖</button>
         </div>
-        <div class="flex-row">
-          <input class="text-xs flex-col mr-2 w-40 appearance-none border-b rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="domain" type="text" placeholder="example.com" :hidden="isDisabled"><button class="text-white flex-col text-xs" :hidden="isDisabled">➕</button>
+        <div class="flex-row flex">
+          <input v-model="domainFeild" class="disabled:border-0 disabled:bg-white text-xs w-full py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="domain" type="text" placeholder="example.com" :hidden="isDisabled"><button @click="addDomain" class="text-white flex-col text-xs" :hidden="isDisabled">➕</button>
       </div>
     </div>
     <div class="flex-col flex max-w-xs px-2 py-2">
@@ -54,13 +68,16 @@
         </button>
     </div>
 </div>
-<div class="w-[48rem]" v-else></div>
+</transition>
+
+<div v-else="selectedItem.site_name" class="w-[48rem]" ></div>
 
 <script>
    new Vue({
       el: '#app',
       data() {
         return {
+          domainFeild: "",
           isDropdownVisible: false,
           selectedItem: {},
           sites: [],
@@ -85,6 +102,24 @@
             console.error('Error fetching the list items:', error);
           }
         },
+        addDomain() {
+          if (this.domainFeild.trim()) {
+            // Append the new item to the items array
+            if (this.isValidDomain(this.domainFeild.trim())) {
+              this.selectedItem.domains.push(this.domainFeild.trim());
+              // Clear the text field
+              this.domainFeild = '';
+            }
+
+          }
+        },
+        isValidDomain(domain) {
+          const domainPattern = /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.(?!-)[A-Za-z0-9.-]{2,253}(?<!-)$/;
+          return domainPattern.test(domain);
+        },
+        removeDomain(index) {
+          this.selectedItem.domains.splice(index, 1);
+        },
         toggleDropdown() {
           this.isDropdownVisible = !this.isDropdownVisible;
         },
@@ -107,6 +142,20 @@
           if (this.$refs.dropdown && !this.$refs.dropdown.contains(event.target)) {
             this.isDropdownVisible = false;
             }
+        },
+        beforeEnter(el) {
+          el.style.opacity = 0;
+        },
+        enter(el, done) {
+          el.offsetHeight; // Trigger a reflow to ensure transition is applied
+          el.style.transition = 'opacity 0.3s';
+          el.style.opacity = 1;
+          done();
+        },
+        leave(el, done) {
+          el.style.transition = 'opacity 0.3s';
+          el.style.opacity = 0;
+          done();
         }
       },
       async created() {

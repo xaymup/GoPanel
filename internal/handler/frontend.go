@@ -4,17 +4,20 @@ import (
     "net/http"
 	"github.com/CloudyKit/jet/v6"
     "gopanel/internal/util"
+	"gopanel/web"
 	"log"
 	"fmt"
 	"strings"
 )
 
-var views = jet.NewSet(
-	jet.NewOSFileSystemLoader("./web"),
-	jet.InDevelopmentMode(),              // Use in development mode to auto-reload templates
-)
+
+// var views = web.GetSet()
+
+
+
 
 func FrontendHandler(w http.ResponseWriter, r *http.Request) {
+
 	var templateName string
 	if util.CheckIfStackReady() {
 		session, _ := Store.Get(r, "session")
@@ -81,9 +84,11 @@ func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Load and render the template
 
+	views := web.GetViews()
 	tmpl, err := views.GetTemplate(templateName)
     if err != nil {
-        http.Redirect(w, r, "/", http.StatusFound)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+        // http.Redirect(w, r, "/", http.StatusFound)
         return
     }
 
