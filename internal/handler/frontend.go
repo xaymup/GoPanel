@@ -19,7 +19,7 @@ var developmentMode = cmd.GetMode()
 func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 
 	var templateName string
-	if util.CheckIfStackReady() {
+	if util.CheckStack() {
 	// if stackStatus{ 
 		session, _ := Store.Get(r, "session")
 		

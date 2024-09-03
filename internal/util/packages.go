@@ -2,6 +2,8 @@ package util
 
 import "log"
 
+var StackReady bool
+
 func CheckIfInstalled(serviceName string) bool {
 	// Check if the software is installed.
 	err := pkgManager("check", serviceName)
@@ -34,12 +36,19 @@ func CheckAndInstallSoftware(packages []string) {
 				log.Printf("%s is not in the allowed list.\n", pkg)
 			}
 		}
+		CheckIfStackReady();
 }
 
 func CheckIfStackReady () (bool) {
 	if CheckIfInstalled("nginx") && CheckIfInstalled("mariadb-server") && CheckIfInstalled("php8.1-fpm") && CheckIfInstalled("cron") {
+		StackReady = true;
 		return true
 	} else {
 		return false
 	}
+}
+
+
+func CheckStack() bool {
+	return StackReady
 }
