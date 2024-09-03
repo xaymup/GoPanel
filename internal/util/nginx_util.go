@@ -9,6 +9,7 @@ import (
 	"strings"
 	"regexp"
 	"log"
+	"os"
 )
 
 var nginxDir = "/etc/nginx/sites-enabled/"
@@ -90,4 +91,103 @@ func ListSites(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(responses)
+}
+
+
+func WriteNginxConf (sites []NginxSite) error {
+	RemoveAllFiles(nginxDir)
+	for _, site := range sites {
+        // Replace spaces in SiteName with underscores
+        siteName := strings.ReplaceAll(site.SiteName, " ", "_")
+        
+        // Join domains with a comma
+        domains := strings.Join(site.Domains, " ")
+        
+        // Define the content of the configuration file
+        configContent := fmt.Sprintf(`
+server {
+    listen 80;
+    server_name %s;
+
+    root %s;
+    index index.php index.html index.htm;
+
+    # Log files
+    access_log /var/log/nginx/%s_access.log;
+    error_log /var/log/nginx/%s_error.log;
+
+    # Handle requests for static files
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # Handle PHP files
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php%s-fpm.sock; # Adjust PHP version as needed
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    # Disable access to hidden files and directories
+    location ~ /\. {
+        deny all;
+    }
+
+    # Cache control for static files
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|pdf)$ {
+        expires 1d;
+        log_not_found off;
+    }
+}
+`, domains, site.Path, siteName, siteName, site.PHPVersion)
+
+        // Specify the file path
+        filePath := fmt.Sprintf("/etc/nginx/sites-enabled/%s", siteName)
+        
+        // Create or overwrite the file
+        file, err := os.Create(filePath)
+        if err != nil {
+            return fmt.Errorf("could not create file for site %s: %v", site.SiteName, err)
+        }
+        defer file.Close()
+        
+        // Write the content to the file
+        _, err = file.WriteString(configContent)
+        if err != nil {
+            return fmt.Errorf("could not write to file for site %s: %v", site.SiteName, err)
+        }
+
+        fmt.Printf("Configuration file written successfully for site: %s\n", site.SiteName)
+    }
+    
+    return nil
+
+}
+
+
+func WriteSiteConf (w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+	var sites []NginxSite
+
+    // Parse the request body
+	err := json.NewDecoder(r.Body).Decode(&sites)
+
+
+
+    if err != nil {
+        http.Error(w, "Error reading request body", http.StatusInternalServerError)
+        return
+    }
+
+    if err != nil {
+        http.Error(w, "Error parsing JSON", http.StatusBadRequest)
+        return
+    }
+    // Check and install the requested software
+    WriteNginxConf(sites)
 }

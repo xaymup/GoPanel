@@ -115,7 +115,7 @@ document.getElementById('install-button').addEventListener('click', () => {
     // Implement the installation logic or redirection here
     checkAndInstallSoftware();
 });
-
+fetchStatus();
 setInterval(fetchStatus, 5000);
 </script>
 {{ end }}

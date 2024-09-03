@@ -61,8 +61,8 @@ func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 	
 	tmpl, err := views.GetTemplate(templateName)
     if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-        // http.Redirect(w, r, "/", http.StatusFound)
+		//http.Error(w, err.Error(), http.StatusInternalServerError)
+        http.Redirect(w, r, "/", http.StatusFound)
         return
     }
 

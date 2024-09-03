@@ -14,6 +14,8 @@ func Start() {
 	backendMux.HandleFunc("/api/disk-usage", util.DiskUsageHandler)
     backendMux.HandleFunc("/api/resource-usage", util.ResourceUtilHandler)
     backendMux.HandleFunc("/api/list-sites", util.ListSites)
+    backendMux.HandleFunc("/api/write-siteconf", util.WriteSiteConf)
+
 
     frontendMux := http.NewServeMux()
     frontendMux.HandleFunc("/", handler.FrontendHandler)

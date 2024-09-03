@@ -17,7 +17,7 @@
       </button>
       <div class="flex flex-row">
         <button v-if="isDisabled" @click="enableTextField" class="flex text-xs m-2">✏️ Edit</button>
-        <button v-else="isDisabled" @click="disableTextField" class="flex text-xs m-2">💾 Save</button>
+        <button v-else="isDisabled" @click="saveSiteConf" class="flex text-xs m-2">💾 Save</button>
         <button @click="enableTextField" class="flex text-xs m-2">✖ Delete</button>
         <button type="button" class="flex text-xs m-2">➕ Create</button>
       </div>
@@ -38,7 +38,7 @@
 @before-enter="beforeEnter"
 @enter="enter"
 @leave="leave">
-<div v-if="selectedItem.site_name" class="mt-6 flex flex-wrap">
+<div v-if="showToolkit" class="mt-6 flex flex-wrap">
     <div class="flex-col flex max-w-xs px-2 py-2">      
         <div class="flex-row inline-block font-semibold">Site Name: </div>
         <div class="flex flex-nowrap">
@@ -48,7 +48,7 @@
     <div class="flex-col flex max-w-xs px-2 py-2">
         <div class="flex-row font-semibold inline-block">Domains: </div>
         <div v-for="(domain, index) in selectedItem.domains" :key="domain.id" class="flex-row flex">
-            <div class="flex flex-row flex-nowrap"><input v-model="domain" class="disabled:border-0 disabled:bg-white flex text-xs w-full py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="name" :disabled="isDisabled"></div><button @click="removeDomain(index)" class="flex-col text-xs w-4" :hidden="isDisabled">✖</button>
+            <div class="flex flex-row flex-nowrap"><input v-model="domain" class="disabled:border-0 disabled:bg-white flex text-xs w-full py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="name" disabled></div><button @click="removeDomain(index)" class="flex-col text-xs w-4" :hidden="isDisabled">✖</button>
         </div>
         <div class="flex-row flex">
           <input v-model="domainFeild" class="disabled:border-0 disabled:bg-white text-xs w-full py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="domain" type="text" placeholder="example.com" :hidden="isDisabled"><button @click="addDomain" class="text-white flex-col text-xs" :hidden="isDisabled">➕</button>
@@ -81,7 +81,8 @@
           isDropdownVisible: false,
           selectedItem: {},
           sites: [],
-          isDisabled: true
+          isDisabled: true,
+          showToolkit: false,
         };
       },
       methods: {
@@ -101,6 +102,24 @@
           } catch (error) {
             console.error('Error fetching the list items:', error);
           }
+        },
+        async saveSiteConf() {
+          // Prepare the data object
+          const data = this.sites;
+
+          try {
+            // Make the POST request using axios
+            const response = await axios.post('http://localhost:1337/api/write-siteconf', data, {
+              withCredentials: true // Include credentials with the request
+            });
+            console.log('Response:', response.data);
+
+          } catch (error) {
+            console.error('Error submitting form:', error);
+
+          }
+          this.fetchListItems();
+          this.disableTextField()
         },
         addDomain() {
           if (this.domainFeild.trim()) {
@@ -146,6 +165,7 @@
 
 
           this.isDropdownVisible = false;
+          this.showToolkit = true;
           // window.location.href = "/sites/" + site.site_name.replace(/ /g, '_');
         },
         handleClickOutside(event) {
@@ -175,7 +195,7 @@
         const siteNameFromPath = window.location.pathname.split("/")[2].replace(/_/g, ' ');
         // history.pushState(null, '', "/sites/" + siteNameFromPath);
         this.selectedItem = this.sites.find(obj => obj.site_name === window.location.pathname.split("/")[2].replace(/_/g, ' '));
-
+        this.showToolkit = true;
 
 
       },
