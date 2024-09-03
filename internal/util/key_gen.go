@@ -3,11 +3,15 @@ package util
 import (
     "crypto/rand"
     "encoding/base64"
+    "log"
 )
 
 func GenerateSecretKey(length int) (string, error) {
     // Create a byte slice with the desired length
     bytes := make([]byte, length)
+
+    log.Println("Generating session keys")
+
 
     // Fill the byte slice with random data
     _, err := rand.Read(bytes)

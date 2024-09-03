@@ -145,10 +145,12 @@ func ValidateOTPHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OTP is valid!"))
+		log.Println("Succesful authentication", r.RemoteAddr)
 		util.Write2FA(Secret)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid OTP"))
+		log.Println("Authentication failure", r.RemoteAddr)
 	}
 	log.Println(r.Method, r.URL, r.RemoteAddr)
 }

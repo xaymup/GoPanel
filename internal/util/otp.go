@@ -4,9 +4,13 @@ import (
     "github.com/pquerna/otp/totp"
     "github.com/skip2/go-qrcode"
     "fmt"
+    "log"
 )
 
 func Generate2FAQRCode() ([]byte, string, error) {
+
+    log.Println("Generating OTP key")
+
     // Generate a new OTP key
 	ip, _ := GetServerIP() 
     key, err := totp.Generate(totp.GenerateOpts{

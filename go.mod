@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.0
 
 require (
-	github.com/CloudyKit/jet v2.1.2+incompatible
+	github.com/CloudyKit/jet/v6 v6.2.0
 	github.com/gorilla/sessions v1.4.0
 	github.com/pquerna/otp v1.4.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
@@ -14,12 +14,9 @@ require (
 
 require (
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
-	github.com/CloudyKit/jet/v6 v6.2.0 // indirect
 	github.com/boombuler/barcode v1.0.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
-	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20230704071429-0000e147ea92 // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect
 	github.com/tklauser/numcpus v0.8.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect

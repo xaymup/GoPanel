@@ -20,6 +20,8 @@ var views = jet.NewSet(
 )
 
 func readFS(){
+	log.Println("Reading embedded FS")
+
 	err := fs.WalkDir(content, ".", func(path string, d fs.DirEntry, err error) error {
         if err != nil {
             return err

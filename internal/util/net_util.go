@@ -4,11 +4,15 @@ import (
     "net/http"
 	"fmt"
 	"io/ioutil"
+    "log"
 )
 
 func GetServerIP() (string, error) {
     // URL of the service that provides the public IP address
     url := "https://ifconfig.me"
+
+    log.Println("Fetching host IP adderss")
+
 
     // Perform the HTTP GET request
     resp, err := http.Get(url)

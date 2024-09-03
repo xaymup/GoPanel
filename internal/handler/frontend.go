@@ -5,6 +5,7 @@ import (
 	"github.com/CloudyKit/jet/v6"
     "gopanel/internal/util"
 	"gopanel/web"
+	"gopanel/cmd"
 	"log"
 	"fmt"
 	"strings"
@@ -19,7 +20,8 @@ import (
 func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 
 	var templateName string
-	if util.CheckIfStackReady() {
+	// if util.CheckIfStackReady() {
+	if true{ 
 		session, _ := Store.Get(r, "session")
 		
 		// Check if the user is authenticated
@@ -47,44 +49,17 @@ func FrontendHandler(w http.ResponseWriter, r *http.Request) {
 		templateName = "public/install"
 	}
 
+	var views *jet.Set
 
-
-
-
-	// input := map[string]interface{}{
-	// 	"Title": "Home Page",
-	// }
-	// err := templates.ExecuteTemplate(w, fileToServe, input)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// }
-	// data, err := ioutil.ReadFile(fileToServe)
-	// if err != nil {
-	// 	http.Error(w, "File not found", http.StatusNotFound)
-	// 	return
-	// }
-	// w.Header().Set("Content-Type", "text/html")
-	// w.Write(data)
-
-	// err := templates.ExecuteTemplate(w, "view.html", map[string]string{
-    //     "ContentTemplate": tmpl,
-    // })
-    // if err != nil {
-    //     http.Error(w, err.Error(), http.StatusInternalServerError)
-    // }
-	// lmao,_ := templates.ParseFiles(tmpl)
-
-	// data := map[string]interface{}{
-    //     "ContentTemplate": fmt.Sprintf("{{template \"%s\"}}", tmpl),
-    // }
-    // err := templates.ExecuteTemplate(w, "view.html", data)
-    // if err != nil {
-    //     http.Error(w, err.Error(), http.StatusInternalServerError)
-    // }
-
-	// Load and render the template
-
-	views := web.GetViews()
+	if cmd.GetMode() {
+		views = jet.NewSet(
+			jet.NewOSFileSystemLoader("./web"), // Load templates from the "templates" directory
+			jet.InDevelopmentMode(),                  // Disable caching for development mode
+		)
+    } else {
+		views = web.GetViews()
+    }
+	
 	tmpl, err := views.GetTemplate(templateName)
     if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

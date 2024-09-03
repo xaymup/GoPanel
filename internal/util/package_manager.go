@@ -3,9 +3,13 @@ package util
 import (
     "os/exec"
     "fmt"
+	"log"
 )
 
 func detectPackageManager() (string, error) {
+
+	log.Println("Detecting current package manager")
+
     	// List of common package managers
 	packageManagers := []string{
 		"apt-get", "apt", "yum", "dnf", "zypper", "pacman", "brew", "apk", "pkg",
@@ -110,10 +114,10 @@ func pkgManager(action, software string) error {
 		if err != nil {
 			return err
 		} else {
+			log.Println("Running package manager %s", cmd)
 			return nil
 		}
 	}
-
-	return cmd.Run() // For install and remove actions
+	return err;
 }
 

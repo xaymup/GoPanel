@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"regexp"
+	"log"
 )
 
 var nginxDir = "/etc/nginx/sites-enabled/"
@@ -21,6 +22,9 @@ type NginxSite struct {
 
 func ParseSiteConfig(filePath string) (NginxSite, error) {
 	var response NginxSite
+
+	log.Println("Parsing NGINX configuration")
+
 
 	// Read the file content
 	data, err := ioutil.ReadFile(filePath)
@@ -58,15 +62,6 @@ func ParseSiteConfig(filePath string) (NginxSite, error) {
 				response.PHPVersion = matches[1]
 			}
 		}
-		// if strings.HasPrefix(line, "site_name=") {
-		// 	response.SiteName = strings.TrimPrefix(line, "site_name=")
-		// } else if strings.HasPrefix(line, "domains=") {
-		// 	response.Domains = strings.Split(strings.TrimPrefix(line, "domains="), ",")
-		// } else if strings.HasPrefix(line, "path=") {
-		// 	response.Path = strings.TrimPrefix(line, "path=")
-		// } else if strings.HasPrefix(line, "php_version=") {
-		// 	response.PHPVersion = strings.TrimPrefix(line, "php_version=")
-		// }
 	}
 
 	return response, nil
