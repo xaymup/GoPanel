@@ -8,16 +8,13 @@ GoPanel is a minimal server management panel written in Go. It is designed to su
 
 - **Minimal Authentication Flow**: Very simple secure access with only two-factor authentication (2FA) to ensure that only authorized users can manage the server.
 - **Simple API Framework**: Provides a straightforward API for integration and automation.
-- **EmbedFS**: The entire panel operates from a single binary, simplifying deployment and management.
+- **Portable**: The entire panel operates from a single binary, simplifying deployment and management.
 
-## Getting Started
+## Building from source
 
 ### Prerequisites
 
-- [Go](https://golang.org/dl/) (version 1.23 or higher) installed on your system. (Only for building)
-- Access to a server running a LEMP stack.
-
-### Installation
+- [Go](https://golang.org/dl/) (version 1.23 or higher) installed on your system.
 
 1. **Clone the Repository**:
 
@@ -49,7 +46,6 @@ sudo go run cmd/gopanel/main.go
 ### Usage
 
 1. Access the Panel: Open your web browser and navigate to http://localhost:8888.
-
 2. Authenticate: Use your 2FA authenticator to log in.
 
 ### Contributing
