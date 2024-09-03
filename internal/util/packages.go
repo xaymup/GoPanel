@@ -4,6 +4,10 @@ import "log"
 
 var StackReady bool
 
+func init (){
+	CheckIfStackReady()
+}
+
 func CheckIfInstalled(serviceName string) bool {
 	// Check if the software is installed.
 	err := pkgManager("check", serviceName)

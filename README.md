@@ -6,7 +6,7 @@ GoPanel is a minimal server management panel written in Go. It is designed to su
 
 ## Features
 
-- **Minimal Authentication Flow**: Very simple secure access with only two-factor authentication (2FA) to ensure that only authorized users can manage the server.
+- **Minimal Authentication Flow**: Very simple secure access with OTP only to ensure that only authorized users can manage the server.
 - **Simple API Framework**: Provides a straightforward API for integration and automation.
 - **EmbedFS**: The entire panel operates from a single binary, simplifying deployment and management.
 

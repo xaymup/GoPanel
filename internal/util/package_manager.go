@@ -9,7 +9,7 @@ import (
 
 func detectPackageManager() (string, error) {
 
-	log.Println("Detecting current package manager")
+	log.Println("Detecting available package manager")
 
     	// List of common package managers
 	packageManagers := []string{
@@ -24,7 +24,7 @@ func detectPackageManager() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no supported package manager found")
+	return "", fmt.Errorf("No supported package manager found")
 }
 
 
@@ -104,11 +104,11 @@ func pkgManager(action, software string) error {
 			cmd = exec.Command("pkg", "info", software)
 		}
 	default:
-		return fmt.Errorf("unsupported package manager: %s", pm)
+		return fmt.Errorf("Unsupported package manager: %s", pm)
 	}
 
 	if cmd == nil {
-		return fmt.Errorf("no command found for package manager: %s", pm)
+		return fmt.Errorf("No command found for package manager: %s", pm)
 	}
 
 	if action == "check" {
@@ -119,7 +119,7 @@ func pkgManager(action, software string) error {
 			return nil
 		}
 	}
-	log.Println("Running command", cmd)
+	log.Println("Running command: ", cmd)
 	return cmd.Run();
 }
 
