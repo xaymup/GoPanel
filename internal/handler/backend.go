@@ -34,7 +34,7 @@ func BackendHandler(w http.ResponseWriter, r *http.Request) {
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	status := map[string]bool{
 		"nginx": util.CheckIfInstalled("nginx"),
-		"php8.1-fpm":   util.CheckIfInstalled("php8.1-fpm"),
+		"php-fpm":   util.CheckIfInstalled("php-fpm"),
 		"mariadb-server": util.CheckIfInstalled("mariadb-server"),
 		"cron":  util.CheckIfInstalled("cron"),
 	}	

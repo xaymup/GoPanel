@@ -1,6 +1,8 @@
 package util
 
-import "log"
+import ("log"
+
+)
 
 var StackReady bool
 
@@ -22,7 +24,7 @@ func CheckAndInstallSoftware(packages []string) {
 	allowedPackages := map[string]struct{}{
         "nginx":           {},
         "mariadb-server":  {},
-        "php8.1-fpm":      {},
+        "php-fpm":      {},
         "cron":            {},
     }
 		for _, pkg := range packages {
@@ -44,7 +46,7 @@ func CheckAndInstallSoftware(packages []string) {
 }
 
 func CheckIfStackReady () (bool) {
-	if CheckIfInstalled("nginx") && CheckIfInstalled("mariadb-server") && CheckIfInstalled("php8.1-fpm") && CheckIfInstalled("cron") {
+	if CheckIfInstalled("nginx") && CheckIfInstalled("mariadb-server") && CheckIfInstalled("php-fpm") && CheckIfInstalled("cron") {
 		StackReady = true;
 		return true
 	} else {

@@ -36,8 +36,8 @@ async function fetchStatus() {
                 Nginx
             </li>
             <li class="flex items-center mb-2">
-                <span class="w-5 h-5 flex items-center justify-center mr-2 ${data['php8.1-fpm'] ? 'text-green-500' : 'text-red-500'}">
-                    ${data['php8.1-fpm'] ? '✔️' : '❌'}
+                <span class="w-5 h-5 flex items-center justify-center mr-2 ${data['php-fpm'] ? 'text-green-500' : 'text-red-500'}">
+                    ${data['php-fpm'] ? '✔️' : '❌'}
                 </span>
                 PHP
             </li>

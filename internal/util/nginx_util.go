@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"log"
 	"os"
+	"os/exec"
 )
 
 var nginxDir = "/etc/nginx/sites-enabled/"
@@ -160,7 +161,7 @@ server {
 
         fmt.Printf("Configuration file written successfully for site: %s\n", site.SiteName)
     }
-    
+    restartNginx()
     return nil
 
 }
@@ -190,4 +191,22 @@ func WriteSiteConf (w http.ResponseWriter, r *http.Request) {
     }
     // Check and install the requested software
     WriteNginxConf(sites)
+}
+
+func restartNginx() error {
+	// Define the command to restart Nginx
+	cmd := exec.Command("sudo", "systemctl", "restart", "nginx")
+
+	// Set the command output to be displayed in the terminal
+	cmd.Stdout = exec.Command("tee", "/dev/stdout").Stdout
+	cmd.Stderr = exec.Command("tee", "/dev/stderr").Stderr
+
+	log.Println("Restarting Nginx")
+
+	// Run the command
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to restart Nginx: %v", err)
+	}
+
+	return nil
 }

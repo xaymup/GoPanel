@@ -3,123 +3,38 @@ package util
 import (
     "os/exec"
     "fmt"
-	"log"
 )
-
-
-func detectPackageManager() (string, error) {
-
-	log.Println("Detecting available package manager")
-
-    	// List of common package managers
-	packageManagers := []string{
-		"apt-get", "apt", "yum", "dnf", "zypper", "pacman", "brew", "apk", "pkg",
-	}
-
-	for _, pm := range packageManagers {
-		cmd := exec.Command("which", pm)
-		err := cmd.Run()
-		if err == nil {
-			return pm, nil
-		}
-	}
-
-	return "", fmt.Errorf("No supported package manager found")
-}
-
-
-var pm,_ = detectPackageManager()
-
 
 func pkgManager(action, software string) error {
 
-
 	var cmd *exec.Cmd
-	var queryCmd string
-	
-	switch pm {
-	case "apt-get", "apt":
-		if action == "install" {
-			cmd = exec.Command("sudo", pm, "install", "-y", software)
-		} else if action == "remove" {
-			cmd = exec.Command("sudo", pm, "remove", "-y", software)
-		} else if action == "check" {
-			queryCmd = fmt.Sprintf("dpkg -l | grep ^ii | awk '{print $2}' | grep ^%s$", software)
-			cmd = exec.Command("sh", "-c", queryCmd)
-		}
-	case "yum":
-		if action == "install" {
-			cmd = exec.Command("sudo", pm, "install", "-y", software)
-		} else if action == "remove" {
-			cmd = exec.Command("sudo", pm, "remove", "-y", software)
-		} else if action == "check" {
-			cmd = exec.Command("rpm", "-q", software)
-		}
-	case "dnf":
-		if action == "install" {
-			cmd = exec.Command("sudo", pm, "install", "-y", software)
-		} else if action == "remove" {
-			cmd = exec.Command("sudo", pm, "remove", "-y", software)
-		} else if action == "check" {
-			cmd = exec.Command("dnf", "list", "installed", software)
-		}
-	case "zypper":
-		if action == "install" {
-			cmd = exec.Command("sudo", pm, "install", "-y", software)
-		} else if action == "remove" {
-			cmd = exec.Command("sudo", pm, "remove", "-y", software)
-		} else if action == "check" {
-			cmd = exec.Command("zypper", "se", "--installed-only", software)
-		}
-	case "pacman":
-		if action == "install" {
-			cmd = exec.Command("sudo", pm, "-S", "--noconfirm", software)
-		} else if action == "remove" {
-			cmd = exec.Command("sudo", pm, "-R", "--noconfirm", software)
-		} else if action == "check" {
-			cmd = exec.Command("pacman", "-Q", software)
-		}
-	case "brew":
-		if action == "install" {
-			cmd = exec.Command("brew", "install", software)
-		} else if action == "remove" {
-			cmd = exec.Command("brew", "uninstall", software)
-		} else if action == "check" {
-			cmd = exec.Command("brew", "list", software)
-		}
-	case "apk":
-		if action == "install" {
-			cmd = exec.Command("apk", "add", software)
-		} else if action == "remove" {
-			cmd = exec.Command("apk", "del", software)
-		} else if action == "check" {
-			cmd = exec.Command("apk", "info", software)
-		}
-	case "pkg":
-		if action == "install" {
-			cmd = exec.Command("pkg", "install", "-y", software)
-		} else if action == "remove" {
-			cmd = exec.Command("pkg", "delete", "-y", software)
-		} else if action == "check" {
-			cmd = exec.Command("pkg", "info", software)
-		}
+
+	switch action {
+	case "install":
+		// Command to install the software
+		cmd = exec.Command("apt", "install", "-y", software)
+	case "remove":
+		// Command to uninstall the software
+		cmd = exec.Command("apt", "uninstall", "-y", software)
+	case "check":
+		queryCmd := fmt.Sprintf("dpkg -l | grep ^ii | awk '{print $2}' | grep ^%s$", software)
+		cmd = exec.Command("sh", "-c", queryCmd)
 	default:
-		return fmt.Errorf("Unsupported package manager: %s", pm)
+		return fmt.Errorf("invalid action: %s", action)
 	}
 
-	if cmd == nil {
-		return fmt.Errorf("No command found for package manager: %s", pm)
+	// Execute the command
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error executing command: %v\nOutput: %s", err, output)
 	}
 
-	if action == "check" {
-		_, err := cmd.CombinedOutput()
-		if err != nil {
-			return err
-		} else {
-			return nil
-		}
+	// If the action is "check" and there's no output, it means the software is not installed
+	if action == "check" && len(output) == 0 {
+		fmt.Printf("%s is not installed.\n", software)
+	} else {
+		fmt.Printf("%s\n", output)
 	}
-	log.Println("Running command: ", cmd)
-	return cmd.Run();
+
+	return nil
 }
-
