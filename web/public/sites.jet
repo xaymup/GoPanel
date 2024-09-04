@@ -18,8 +18,8 @@
       <div class="flex flex-row">
         <button v-if="isDisabled" @click="enableTextField" class="flex text-xs m-2">✏️ Edit</button>
         <button v-else="isDisabled" @click="saveSiteConf" class="flex text-xs m-2">💾 Save</button>
-        <button @click="enableTextField" class="flex text-xs m-2">✖ Delete</button>
-        <button type="button" class="flex text-xs m-2">➕ Create</button>
+        <button @click="removeSite" class="flex text-xs m-2">✖ Delete</button>
+        <button @click="addSite" type="button" class="flex text-xs m-2">➕ Create</button>
       </div>
 </div>
 <transition
@@ -83,6 +83,7 @@
           sites: [],
           isDisabled: true,
           showToolkit: false,
+          siteNum: 1
         };
       },
       methods: {
@@ -98,7 +99,9 @@
             }
 
             const sites = await response.json();
-            this.sites = sites;
+            if (sites !== null) {
+              this.sites = sites;
+            }
           } catch (error) {
             console.error('Error fetching the list items:', error);
           }
@@ -120,6 +123,29 @@
           }
           this.fetchListItems();
           this.disableTextField()
+        },
+        addSite() {
+          newSite = {site_name: "New site " + this.siteNum,
+          domains: [],
+          path: "",
+          php_version: "8.1"
+          };
+          this.sites.push(newSite);
+          this.siteNum+=1;
+          this.selectItem(newSite);
+          this.enableTextField();
+        },
+        async removeSite(){
+          if (this.sites.length > 1){
+            let siteToRemove = this.sites.indexOf(this.selectedItem);
+            this.sites.splice(siteToRemove,1);
+            if (siteToRemove < (this.sites.length - 1)){
+            this.selectItem(this.sites[siteToRemove]); 
+          } else {
+            this.selectItem(this.sites[siteToRemove-1]);
+          }
+          }
+          
         },
         addDomain() {
           if (this.domainFeild.trim()) {
@@ -158,12 +184,10 @@
         disableTextField() {
           this.isDisabled = true;
         },
-        selectItem(site) {
+        async selectItem(site) {
           this.selectedItem = site;
-                  console.log(site.site_name);
+                  console.log(this.sites.indexOf(site));
                   history.pushState(null, '', "/sites/" + site.site_name.replace(/ /g, '_'));
-
-
           this.isDropdownVisible = false;
           this.showToolkit = true;
           // window.location.href = "/sites/" + site.site_name.replace(/ /g, '_');
