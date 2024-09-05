@@ -139,11 +139,12 @@
           if (this.sites.length > 1){
             let siteToRemove = this.sites.indexOf(this.selectedItem);
             this.sites.splice(siteToRemove,1);
-            if (siteToRemove < (this.sites.length - 1)){
+            if (siteToRemove < (this.sites.length)){
             this.selectItem(this.sites[siteToRemove]); 
           } else {
             this.selectItem(this.sites[siteToRemove-1]);
           }
+          this.enableTextField()
           }
           
         },
@@ -158,16 +159,6 @@
 
           }
         },
-        generateRandomInstanceName() {
-            const adjectives = ["Quick", "Silent", "Bright", "Dark", "Swift", "Mighty", "Brave", "Clever"];
-            const nouns = ["Tiger", "Falcon", "Eagle", "Lion", "Wolf", "Bear", "Shark", "Dragon"];
-            
-            const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-            const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-            const randomNumber = Math.floor(Math.random() * 1000); // Random number between 0 and 999
-
-            return `${randomAdjective}${randomNoun}${randomNumber}`;
-        },
         isValidDomain(domain) {
           const domainPattern = /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.(?!-)[A-Za-z0-9.-]{2,253}(?<!-)$/;
           return domainPattern.test(domain);
@@ -178,19 +169,19 @@
         toggleDropdown() {
           this.isDropdownVisible = !this.isDropdownVisible;
         },
-        enableTextField() {
+        async enableTextField() {
           this.isDisabled = false;
         },
-        disableTextField() {
+        async disableTextField() {
           this.isDisabled = true;
         },
         async selectItem(site) {
           this.selectedItem = site;
-                  console.log(this.sites.indexOf(site));
-                  history.pushState(null, '', "/sites/" + site.site_name.replace(/ /g, '_'));
+          history.pushState(null, '', "/sites/" + this.sites.site.site_name.replace(/ /g, '_'));
+
+          
           this.isDropdownVisible = false;
           this.showToolkit = true;
-          // window.location.href = "/sites/" + site.site_name.replace(/ /g, '_');
         },
         handleClickOutside(event) {
           if (this.$refs.dropdown && !this.$refs.dropdown.contains(event.target)) {
@@ -220,29 +211,7 @@
           this.selectedItem = this.sites.find(obj => obj.site_name === window.location.pathname.split("/")[2].replace(/_/g, ' '));
           this.showToolkit = true;
         }
-
-        
-        // history.pushState(null, '', "/sites/" + siteNameFromPath);
-        // this.selectedItem = this.sites.find(obj => obj.site_name === window.location.pathname.split("/")[2].replace(/_/g, ' '));
-        
-
-
       },
-      // async beforeMount () {
-      // // console.log(history.state.split("/"));
-
-      //           await this.fetchListItems();
-      //     //       if (history.state.split("/").length === 2) {
-      //     //         const siteNameFromPath = this.sites[0]["site_name"].replace(/ /g, '_')
-      //     // history.pushState(null, '', "/sites/" + siteNameFromPath);
-
-      //     // this.selectedItem = this.sites.find(obj => obj.site_name === siteNameFromPath);
-
-
-
-        
-
-      // },
       mounted() {
         document.addEventListener('click', this.handleClickOutside);
 
