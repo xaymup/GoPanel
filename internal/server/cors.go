@@ -29,7 +29,6 @@ func WithCORS(next http.Handler) http.Handler {
             http.Error(w, "Unauthorized", http.StatusUnauthorized)
             return
         }
-        w.WriteHeader(http.StatusOK)
         next.ServeHTTP(w, r)
     })
 }
