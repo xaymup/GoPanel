@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"encoding/json"
     "io"
+    "strings"
 )
 
 type FileDetail struct {
@@ -23,9 +24,9 @@ type FileDetail struct {
 	Permissions string   `json:"permissions"`
 }
 
-type RenameRequest struct {
-	OldPath string `json:"oldPath"`
-	NewPath string `json:"newPath"`
+type FileRequest struct {
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
 }
 
 
@@ -296,23 +297,23 @@ func RenameFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse the incoming request body
-	var req RenameRequest
+	var req FileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	// Check if both paths are provided
-	if req.OldPath == "" || req.NewPath == "" {
+	if req.Source == "" || req.Destination == "" {
 		http.Error(w, "Both oldPath and newPath must be provided", http.StatusBadRequest)
 		return
 	}
 
 	// Clean up and resolve the new file path
-	newFullPath := filepath.Clean(req.NewPath)
+	newFullPath := filepath.Clean(req.Destination)
 
 	// Rename the file
-	err := os.Rename(req.OldPath, newFullPath)
+	err := os.Rename(req.Source, newFullPath)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
 		return
@@ -320,5 +321,81 @@ func RenameFile(w http.ResponseWriter, r *http.Request) {
 
 	// Respond with success
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("File renamed from %s to %s", req.OldPath, req.NewPath)))
+	w.Write([]byte(fmt.Sprintf("File renamed from %s to %s", req.Source, req.Destination)))
+}
+
+func CopyFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the request body
+	var req FileRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if req.Source == "" || req.Destination == "" {
+		http.Error(w, "Both source and destination paths are required", http.StatusBadRequest)
+		return
+	}
+
+	// Copy file
+	if err := copyFile(req.Source, req.Destination); err != nil {
+		http.Error(w, fmt.Sprintf("Error copying file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf("File copied from %s to %s", req.Source, req.Destination)))
+}
+
+// Helper function to copy the file content
+func copyFile(source string, destination string) error {
+	// Generate the correct destination file name with (1), (2), etc. if needed
+	destFilePath := generateFileName(destination)
+
+	srcFile, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	// Ensure the destination directory exists
+	destFile, err := os.Create(filepath.Clean(destFilePath))
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	// Copy the file content
+	_, err = io.Copy(destFile, srcFile)
+	return err
+}
+
+
+func generateFileName(destination string) string {
+	// Check if the file exists
+	if _, err := os.Stat(destination); os.IsNotExist(err) {
+		// File does not exist, return the original destination
+		return destination
+	}
+
+	// Split the file name and extension
+	dir := filepath.Dir(destination)
+	ext := filepath.Ext(destination)
+	baseName := strings.TrimSuffix(filepath.Base(destination), ext)
+
+	// Try adding (1), (2), etc. until a non-existing file is found
+	for i := 1; ; i++ {
+		newFileName := fmt.Sprintf("%s(%d)%s", baseName, i, ext)
+		newFilePath := filepath.Join(dir, newFileName)
+
+		if _, err := os.Stat(newFilePath); os.IsNotExist(err) {
+			// If the file does not exist, return the new file name
+			return newFilePath
+		}
+	}
 }
