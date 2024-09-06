@@ -8,11 +8,30 @@
             ⬅️ Back
             </button>
             <input @keyup.enter="fetchFiles" v-model="path" class="flex-1 w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="path"></div>
-            <button @click="triggerFileInput" class="flex w-auto text-xs">
+            <div class="flex-row flex flex-row mb-2 p-2 flex text-xs items-center justify-center" v-if="renaming">✍️ Rename: <input v-model="selectedFileName" class="flex-1 w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"><button @click="applyRename" class="flex-col text-xs w-4">✔️</button></div>
+            <button @click="triggerFileInput" class="items-center mb-2 justify-center flex w-auto text-xs">
               📤 Upload
             </button>
             <input class="hidden" ref="fileInput" type="file" @change="handleFileChange" />
         </header>
+
+        
+
+        <transition
+        @before-enter="beforeEnter"
+        @enter="enter"
+        @leave="leave">
+        <div ref="dropdown" id="dropdownMenu" v-show="isDropdownVisible" :style="{ top: `${menuPosition.y}px`, left: `${menuPosition.x}px` }" class="min-w-[13rem] shadow absolute z-10 bg-white divide-y divide-gray-100 border-1 border-blue-500 rounded-lg">
+              <a @click="rename" v-text="'Rename'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a v-text="'Compress'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a v-show="isCompressed" v-text="'Extract'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a v-text="'Download'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a v-text="'Cut'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a v-text="'Copy'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a v-text="'Paste'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a v-text="'Delete'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+        </div>
+        </transition>
 
         <!-- File List -->
         <div class="w-full h-96 overflow-y-auto bg-white rounded-lg shadow">
@@ -27,9 +46,9 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permission</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200" @contextmenu.prevent="handleRightClick">
-                    <tr v-for="file in files" :key="file.name">
-                        <td  @click.prevent="updatePath(file.name)" v-if="file.type === 'directory'" v-text="'📁 '+file.name" class="cursor-pointer underline w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr v-for="file in files" :key="file.name" @contextmenu.prevent="handleRightClick(file.name)">
+                        <td v-else @click.prevent="updatePath(file.name)" v-if="file.type === 'directory'" v-text="'📁 '+file.name" class="cursor-pointer underline w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
                         <td v-else v-text="'📄 '+file.name" class="cursor-default truncate w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
                         <td v-text="file.size" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
                         <td v-text="file.type" class="min-w-40 pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
@@ -45,121 +64,189 @@
 
 
 <script>
-       new Vue({
-      el: '#app',
-      data() {
-        return {
-            path: "/",
-            files: [],
-            file: null,
-            uploadStatus: ''
-        };
-      },
-      mounted() {
-         this.fetchFiles();
-      },
-      methods: {
-        triggerFileInput() {
-      this.$refs.fileInput.click();
-    },
-    async handleFileChange(event) {
-      this.file = event.target.files[0];
-
-      if (!this.file) {
-        this.uploadStatus = 'No file selected!';
-        return;
-      }
-      // Proceed to upload the file
-      await this.uploadFile();
-    },
-        async fetchFiles() {
-          try {
-            const response = await fetch(`http://localhost:1337/api/list-files?path=${encodeURIComponent(this.path)}`, {
-              method: 'GET',
-              credentials: 'include' // Include credentials with the request
-            });
-
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
+        new Vue({
+          el: '#app',
+          data() {
+            return {
+              path: "/",
+              files: [],
+              file: null,
+              uploadStatus: '',
+              isDropdownVisible: false,
+              menuPosition: { x: 0, y: 0 },
+              selectedFile: '',
+              isCompressed: false,
+              renaming: false
             }
-
-            this.files = await response.json();
-
-          } catch (error) {
-            console.error('Error fetching the list items:', error);
-          }
-        },
-        async uploadFile() {
-      if (!this.file) {
-        this.uploadStatus = 'No file selected!';
-        return;
-      }
-
-      if (!this.path) {
-        this.uploadStatus = 'Upload path is required!';
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', this.file);
-
-      try {
-
-        const response = await fetch(`http://localhost:1337/api/upload-file?path=${encodeURIComponent(this.path)}`, {
-          method: 'POST',
-          credentials: 'include',
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error('File upload failed');
-        }
-
-        const result = await response.text();
-        this.uploadStatus = `Success: ${result}`;
-        await this.fetchFiles();
-      } catch (error) {
-        this.uploadStatus = `Error: ${error.message}`;
-      }
-      console.log(this.uploadStatus);
-    },
-      async updatePath(name){
-        if (!this.path.endsWith('/')) {
-          this.path = this.path + "/" + name;
-        } else {
-          this.path = this.path + name;
-        }
-        
-        this.fetchFiles();
-      },
-      async goBack(){
-
-        if (this.path !== '' && this.path !== '/') {
-            // Remove trailing slashes and split the path into segments
-            this.path = this.path.replace(/\/+$/, '');
-            const segments = this.path.split('/');
-
-            // Remove the last segment
-            segments.pop();
-
-            // Join the remaining segments back into a path
-            this.path = segments.join('/');
-
-            // Handle the case where the path becomes empty
-            if (this.path === '') {
-              this.path = '/';
-            }
-
-            // Fetch files with the updated path
+          },
+          mounted() {
             this.fetchFiles();
-        }
+            document.addEventListener('click', this.handleClickOutside);
+          },
+          methods: {
+            async applyRename (){
+              try {
+                // Call the Go API endpoint
+                const response = await fetch('http://localhost:1337/api/rename-file', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    oldPath: this.selectedFile,
+                    newPath: this.path.replace(/\/+$/, '') + "/" + this.selectedFileName
+                  })
+                });
 
-      },
-      async handleRightClick(){
+                // Handle the response
+                if (response.ok) {
+                  const result = await response.text();
+                  // document.getElementById("message").innerText = result;
+                } else {
+                  const error = await response.text();
+                  // document.getElementById("message").innerText = `Error: ${error}`;
+                }
+              } catch (err) {
+                // document.getElementById("message").innerText = `Request failed: ${err.message}`;
+              }
+              this.renaming = false;
+              this.fetchFiles();
+            },
+            rename() {
+              this.renaming = true;
+              this.isDropdownVisible = false;
+            },
+            triggerFileInput() {
+              this.$refs.fileInput.click();
+            },
+            async handleClickOutside() {
+              if (this.$refs.dropdown && !this.$refs.dropdown.contains(event.target)) {
+                this.isDropdownVisible = false;
+              }
+            },
+            async handleFileChange(event) {
+              this.file = event.target.files[0];
 
-      }
-    }
-    });
+              if (!this.file) {
+                this.uploadStatus = 'No file selected!';
+                return;
+              }
+              // Proceed to upload the file
+              await this.uploadFile();
+            },
+            async fetchFiles() {
+              try {
+                const response = await fetch(`http://localhost:1337/api/list-files?path=${encodeURIComponent(this.path)}`, {
+                  method: 'GET',
+                  credentials: 'include' // Include credentials with the request
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+
+                this.files = await response.json();
+
+              } catch (error) {
+                console.error('Error fetching the list items:', error);
+              }
+            },
+            async uploadFile() {
+              if (!this.file) {
+                this.uploadStatus = 'No file selected!';
+                return;
+              }
+
+              if (!this.path) {
+                this.uploadStatus = 'Upload path is required!';
+                return;
+              }
+
+              const formData = new FormData();
+              formData.append('file', this.file);
+
+              try {
+
+                const response = await fetch(`http://localhost:1337/api/upload-file?path=${encodeURIComponent(this.path)}`, {
+                  method: 'POST',
+                  credentials: 'include',
+                  body: formData
+                });
+
+                if (!response.ok) {
+                  throw new Error('File upload failed');
+                }
+
+                const result = await response.text();
+                this.uploadStatus = `Success: ${result}`;
+                await this.fetchFiles();
+              } catch (error) {
+                this.uploadStatus = `Error: ${error.message}`;
+              }
+              console.log(this.uploadStatus);
+            },
+            async updatePath(name) {
+              if (!this.path.endsWith('/')) {
+                this.path = this.path + "/" + name;
+              } else {
+                this.path = this.path + name;
+              }
+
+              this.fetchFiles();
+            },
+            async goBack() {
+
+              if (this.path !== '' && this.path !== '/') {
+                // Remove trailing slashes and split the path into segments
+                this.path = this.path.replace(/\/+$/, '');
+                const segments = this.path.split('/');
+
+                // Remove the last segment
+                segments.pop();
+
+                // Join the remaining segments back into a path
+                this.path = segments.join('/');
+
+                // Handle the case where the path becomes empty
+                if (this.path === '') {
+                  this.path = '/';
+                }
+
+                // Fetch files with the updated path
+                this.fetchFiles();
+              }
+
+            },
+            async handleRightClick(name) {
+              this.isDropdownVisible = true;
+              this.menuPosition = { x: event.clientX, y: event.clientY };
+              // Store information about the selected file or item if needed
+              this.selectedFileName = name;
+              this.selectedFile = this.path.replace(/\/$/, '') + "/" + name;
+              if (this.selectedFile.endsWith(".zip")){
+                this.isCompressed = true;
+              } else {
+                this.isCompressed = false;
+              }
+              console.log(this.selectedFile);
+            },
+            beforeEnter(el) {
+              el.style.opacity = 0;
+            },
+            enter(el, done) {
+              el.offsetHeight; // Trigger a reflow to ensure transition is applied
+              el.style.transition = 'opacity 0.3s';
+              el.style.opacity = 1;
+              done();
+            },
+            leave(el, done) {
+              el.style.transition = 'opacity 0.3s';
+              el.style.opacity = 0;
+              done();
+            }
+          }
+        });
 </script>
 </script>
 {{ end }}

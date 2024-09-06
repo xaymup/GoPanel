@@ -202,6 +202,22 @@
           el.style.opacity = 0;
           done();
         }
+      },
+      async created() {
+        await this.fetchListItems();
+
+        if (window.location.pathname.split("/")[2]){
+          const siteNameFromPath = window.location.pathname.split("/")[2].replace(/_/g, ' ');
+          this.selectedItem = this.sites.find(obj => obj.site_name === window.location.pathname.split("/")[2].replace(/_/g, ' '));
+          this.showToolkit = true;
+        }
+      },
+      mounted() {
+        document.addEventListener('click', this.handleClickOutside);
+
+      },
+      beforeDestroy() {
+        document.removeEventListener('click', this.handleClickOutside);
       }
     });
 </script>

@@ -23,6 +23,11 @@ type FileDetail struct {
 	Permissions string   `json:"permissions"`
 }
 
+type RenameRequest struct {
+	OldPath string `json:"oldPath"`
+	NewPath string `json:"newPath"`
+}
+
 
 
 func FileExists(path string) bool {
@@ -280,4 +285,40 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 
         fmt.Fprintf(w, "File uploaded successfully: %s\n", filePath)
     }
+}
+
+
+func RenameFile(w http.ResponseWriter, r *http.Request) {
+	// Ensure the method is POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the incoming request body
+	var req RenameRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Check if both paths are provided
+	if req.OldPath == "" || req.NewPath == "" {
+		http.Error(w, "Both oldPath and newPath must be provided", http.StatusBadRequest)
+		return
+	}
+
+	// Clean up and resolve the new file path
+	newFullPath := filepath.Clean(req.NewPath)
+
+	// Rename the file
+	err := os.Rename(req.OldPath, newFullPath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error renaming file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with success
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf("File renamed from %s to %s", req.OldPath, req.NewPath)))
 }
