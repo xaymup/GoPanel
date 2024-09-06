@@ -26,7 +26,7 @@
               <a @click="rename" v-text="'✍️ Rename'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a v-text="'📦 Compress'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a v-show="isCompressed" v-text="'📤 Extract'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
-              <a v-show="isFile" v-text="'💾 Download'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a @click="download" v-show="isFile" v-text="'💾 Download'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="cut" v-text="'✂️ Cut'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="copy" v-text="'📑 Copy'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="paste" v-text="'📋 Paste'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
@@ -48,7 +48,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="file in files" :key="file.name" @contextmenu.prevent="handleRightClick(file)">
+                    <tr v-for="file in files" :key="file.name"  @contextmenu.prevent="handleRightClick(file)">
                         <td v-else @click.prevent="updatePath(file.name)" v-if="file.type === 'directory'" v-text="'📁 '+file.name" class="cursor-pointer underline w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
                         <td v-else v-text="'📄 '+file.name" class="cursor-default truncate w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
                         <td v-text="file.size" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
@@ -132,6 +132,33 @@
               this.filenameToOperate = this.selectedFileName;
               this.operation = "cut";
               this.isDropdownVisible = false;
+            },
+            async download() {
+              try {
+                // Call the Go API endpoint
+                const response = await fetch(`http://localhost:1337/api/download-file?file=${encodeURIComponent(this.selectedFile)}`, {
+                  method: 'GET',
+                  credentials: 'include'
+                });
+
+                // Handle the response
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const link = document.createElement('a');
+                  link.href = window.URL.createObjectURL(blob);
+                  link.download = this.selectedFileName;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+
+                } else {
+                  const error = await response.text();
+                  // document.getElementById("message").innerText = `Error: ${error}`;
+                }
+                } catch (err) {
+                  // document.getElementById("message").innerText = `Request failed: ${err.message}`;
+                }
+                this.isDropdownVisible = false;
             },
             async paste() {
               if (this.operation === "copy"){

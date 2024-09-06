@@ -30,6 +30,11 @@ type FileRequest struct {
 }
 
 
+type DownloadRequest struct {
+	FilePath string `json:"filePath"`
+}
+
+
 
 func FileExists(path string) bool {
     _, err := os.Stat(path)
@@ -311,6 +316,7 @@ func RenameFile(w http.ResponseWriter, r *http.Request) {
 
 	// Clean up and resolve the new file path
 	newFullPath := filepath.Clean(req.Destination)
+    newFullPath = generateFileName(newFullPath)
 
 	// Rename the file
 	err := os.Rename(req.Source, newFullPath)
@@ -398,4 +404,29 @@ func generateFileName(destination string) string {
 			return newFilePath
 		}
 	}
+}
+
+func DownloadFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get the file path from the query parameters
+	filePath := r.URL.Query().Get("file")
+	if filePath == "" {
+		http.Error(w, "File path is required", http.StatusBadRequest)
+		return
+	}
+
+	// Check if the file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	// Serve the file as a downloadable attachment
+	fileName := filepath.Base(filePath)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+	http.ServeFile(w, r, filePath)
 }
