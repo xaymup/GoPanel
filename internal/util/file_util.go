@@ -430,3 +430,34 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 	http.ServeFile(w, r, filePath)
 }
+
+func DeleteFile(w http.ResponseWriter, r *http.Request) {
+	// Only allow DELETE requests
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get the file path from the query parameters
+	filePath := r.URL.Query().Get("file")
+	if filePath == "" {
+		http.Error(w, "File path is required", http.StatusBadRequest)
+		return
+	}
+
+	// Try to remove the file
+	err := os.RemoveAll(filePath)
+	if err != nil {
+		// If an error occurred, send an appropriate response
+		if os.IsNotExist(err) {
+			http.Error(w, "File not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Failed to delete file", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Send a success message
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "File deleted successfully: %s", filePath)
+}

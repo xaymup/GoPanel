@@ -20,6 +20,8 @@ func Start() {
     backendMux.HandleFunc("/api/rename-file", util.RenameFile)
     backendMux.HandleFunc("/api/copy-file", util.CopyFile)
     backendMux.HandleFunc("/api/download-file", util.DownloadFile)
+    backendMux.HandleFunc("/api/delete-file", util.DeleteFile)
+
 
 
 

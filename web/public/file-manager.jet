@@ -30,7 +30,7 @@
               <a @click="cut" v-text="'✂️ Cut'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="copy" v-text="'📑 Copy'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="paste" v-text="'📋 Paste'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
-              <a v-text="'🗑️ Delete'" class="text-red-500 text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a @click="deleteFile" v-text="'🗑️ Delete'" class="text-red-500 text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
         </div>
         </transition>
 
@@ -80,7 +80,8 @@
               isFile: false,
               renaming: false,
               operation: '',
-              fileToOperate: ""
+              fileToOperate: "",
+              selectedFileName: ""
             }
           },
           mounted() {
@@ -98,8 +99,8 @@
                     'Content-Type': 'application/json',
                   },
                   body: JSON.stringify({
-                    oldPath: this.selectedFile,
-                    newPath: this.path.replace(/\/+$/, '') + "/" + this.selectedFileName
+                    Source: this.selectedFile,
+                    Destination: this.path.replace(/\/+$/, '') + "/" + this.selectedFileName
                   })
                 });
 
@@ -159,6 +160,28 @@
                   // document.getElementById("message").innerText = `Request failed: ${err.message}`;
                 }
                 this.isDropdownVisible = false;
+            },
+            async deleteFile() {
+              try {
+                // Call the Go API endpoint
+                const response = await fetch(`http://localhost:1337/api/delete-file?file=${encodeURIComponent(this.selectedFile)}`, {
+                  method: 'POST',
+                  credentials: 'include'
+                });
+
+                // Handle the response
+                if (response.ok) {
+                  const blob = await response.text();
+
+                } else {
+                  const error = await response.text();
+                  // document.getElementById("message").innerText = `Error: ${error}`;
+                }
+                } catch (err) {
+                  // document.getElementById("message").innerText = `Request failed: ${err.message}`;
+                }
+                this.isDropdownVisible = false;
+                this.fetchFiles();
             },
             async paste() {
               if (this.operation === "copy"){
