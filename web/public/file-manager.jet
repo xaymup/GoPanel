@@ -3,11 +3,15 @@
 {{ block container() }}
     <div class="flex-1 p-2">
         <!-- Header -->
-        <header class="flex-row flex  mb-2">
-            <button @click="goBack" class="flex">
+        <header class="flex-row flex items-center justify-center mb-2">
+            <button @click="goBack" class="flex w-auto text-xs">
             ⬅️ Back
             </button>
-            <input @keyup.enter="fetchFiles" v-model="path" class="flex w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="path"></div>
+            <input @keyup.enter="fetchFiles" v-model="path" class="flex-1 w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="path"></div>
+            <button @click="triggerFileInput" class="flex w-auto text-xs">
+              📤 Upload
+            </button>
+            <input class="hidden" ref="fileInput" type="file" @change="handleFileChange" />
         </header>
 
         <!-- File List -->
@@ -28,7 +32,7 @@
                         <td  @click.prevent="updatePath(file.name)" v-if="file.type === 'directory'" v-text="'📁 '+file.name" class="cursor-pointer underline w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
                         <td v-else v-text="'📄 '+file.name" class="cursor-default truncate w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
                         <td v-text="file.size" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
-                        <td v-text="file.type" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
+                        <td v-text="file.type" class="min-w-40 pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
                         <td v-text="file.modified" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
                         <td v-text="file.owner" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
                         <td v-text="file.permissions" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
@@ -47,13 +51,27 @@
         return {
             path: "/",
             files: [],
-            file: {}
+            file: null,
+            uploadStatus: ''
         };
       },
       mounted() {
          this.fetchFiles();
       },
       methods: {
+        triggerFileInput() {
+      this.$refs.fileInput.click();
+    },
+    async handleFileChange(event) {
+      this.file = event.target.files[0];
+
+      if (!this.file) {
+        this.uploadStatus = 'No file selected!';
+        return;
+      }
+      // Proceed to upload the file
+      await this.uploadFile();
+    },
         async fetchFiles() {
           try {
             const response = await fetch(`http://localhost:1337/api/list-files?path=${encodeURIComponent(this.path)}`, {
@@ -71,6 +89,40 @@
             console.error('Error fetching the list items:', error);
           }
         },
+        async uploadFile() {
+      if (!this.file) {
+        this.uploadStatus = 'No file selected!';
+        return;
+      }
+
+      if (!this.path) {
+        this.uploadStatus = 'Upload path is required!';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', this.file);
+
+      try {
+
+        const response = await fetch(`http://localhost:1337/api/upload-file?path=${encodeURIComponent(this.path)}`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('File upload failed');
+        }
+
+        const result = await response.text();
+        this.uploadStatus = `Success: ${result}`;
+        await this.fetchFiles();
+      } catch (error) {
+        this.uploadStatus = `Error: ${error.message}`;
+      }
+      console.log(this.uploadStatus);
+    },
       async updatePath(name){
         if (!this.path.endsWith('/')) {
           this.path = this.path + "/" + name;

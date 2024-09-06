@@ -11,6 +11,7 @@ import (
 	"os/user"
 	"syscall"
 	"encoding/json"
+    "io"
 )
 
 type FileDetail struct {
@@ -216,4 +217,67 @@ func calculateDirSize(path string) (int64, error) {
         return 0, err
     }
     return totalSize, nil
+}
+
+func UploadFile(w http.ResponseWriter, r *http.Request) {
+    // Restricting the request method to POST
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    // Get the path parameter from the query string
+    path := r.URL.Query().Get("path")
+    if path == "" {
+        http.Error(w, "Path parameter is missing", http.StatusBadRequest)
+        return
+    }
+
+    // Create the destination directory if it doesn't exist
+    if err := os.MkdirAll(path, 0755); err != nil {
+        http.Error(w, "Could not create directory", http.StatusInternalServerError)
+        return
+    }
+
+    // Create a multipart reader to handle file uploads without memory limits
+    reader, err := r.MultipartReader()
+    if err != nil {
+        http.Error(w, "Could not create multipart reader", http.StatusBadRequest)
+        return
+    }
+
+    // Iterate over each part of the multipart request
+    for {
+        part, err := reader.NextPart()
+        if err == io.EOF {
+            break // No more parts
+        }
+        if err != nil {
+            http.Error(w, "Error reading file part", http.StatusInternalServerError)
+            return
+        }
+
+        // Skip form fields, process only the file part
+        if part.FileName() == "" {
+            continue
+        }
+
+        // Create destination file in the specified path
+        filePath := filepath.Join(path, part.FileName())
+        dst, err := os.Create(filePath)
+        if err != nil {
+            http.Error(w, "Could not save file", http.StatusInternalServerError)
+            return
+        }
+        defer dst.Close()
+
+        // Copy the uploaded file data to the destination file
+        _, err = io.Copy(dst, part)
+        if err != nil {
+            http.Error(w, "Could not copy file", http.StatusInternalServerError)
+            return
+        }
+
+        fmt.Fprintf(w, "File uploaded successfully: %s\n", filePath)
+    }
 }
