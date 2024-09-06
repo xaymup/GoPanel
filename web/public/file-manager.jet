@@ -7,10 +7,7 @@
             <button @click="goBack" class="flex">
             ⬅️ Back
             </button>
-            <input v-model="path" class="flex w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="path"></div>
-            <button @click="fetchFiles" class="flex">
-            📁 Go
-            </button>
+            <input @keyup.enter="fetchFiles" v-model="path" class="flex w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="path"></div>
         </header>
 
         <!-- File List -->
@@ -28,8 +25,8 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200" @contextmenu.prevent="handleRightClick">
                     <tr v-for="file in files" :key="file.name">
-                        <td  @click.prevent="updatePath(file.name)" v-if="file.type === 'directory'" v-text="file.name" class="truncate w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
-                        <td v-else v-text="file.name" class="truncate w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
+                        <td  @click.prevent="updatePath(file.name)" v-if="file.type === 'directory'" v-text="'📁 '+file.name" class="cursor-pointer underline w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
+                        <td v-else v-text="'📄 '+file.name" class="cursor-default truncate w-44 max-w-44 pl-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900"></td>
                         <td v-text="file.size" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
                         <td v-text="file.type" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>
                         <td v-text="file.modified" class="pl-6 py-4 whitespace-nowrap text-xs text-gray-500"></td>

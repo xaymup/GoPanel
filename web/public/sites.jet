@@ -177,7 +177,7 @@
         },
         async selectItem(site) {
           this.selectedItem = site;
-          history.pushState(null, '', "/sites/" + this.sites.site.site_name.replace(/ /g, '_'));
+          history.pushState(null, '', "/sites/" + this.selectedItem.site_name.replace(/ /g, '_'));
 
           
           this.isDropdownVisible = false;
