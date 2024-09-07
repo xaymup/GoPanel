@@ -25,6 +25,7 @@ func Start() {
     backendMux.HandleFunc("/api/extract-file", util.ExtractFile)
     backendMux.HandleFunc("/api/get-file", util.GetFile)
     backendMux.HandleFunc("/api/update-file", util.UpdateFile)
+    backendMux.HandleFunc("/api/fix-permissions", util.FixPermissions)
 
 
 

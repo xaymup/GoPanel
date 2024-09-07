@@ -15,6 +15,7 @@ import (
     "strings"
     "archive/zip"
     "io/fs"
+	"os/exec"
 )
 
 type FileDetail struct {
@@ -754,4 +755,55 @@ func UpdateFile(w http.ResponseWriter, r *http.Request) {
 
     w.WriteHeader(http.StatusOK)
     w.Write([]byte("File updated successfully"))
+}
+
+type RequestPayload struct {
+    Path string `json:"path"`
+}
+
+// executeCommand runs a shell command and returns the output or error
+func executeCommand(cmd string, args ...string) (string, error) {
+    out, err := exec.Command(cmd, args...).CombinedOutput()
+    return string(out), err
+}
+
+// handleFileOperations handles the file operations based on the provided path
+func FixPermissions(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+    var payload RequestPayload
+    err := json.NewDecoder(r.Body).Decode(&payload)
+    if err != nil {
+        http.Error(w, "Bad request", http.StatusBadRequest)
+        return
+    }
+
+    if payload.Path == "" {
+        http.Error(w, "Path cannot be empty", http.StatusBadRequest)
+        return
+    }
+
+    // Perform the operations
+    commands := []struct {
+        cmd  string
+        args []string
+    }{
+        {"chown", []string{"www-data:www-data", "-R", payload.Path}},
+        {"find", []string{payload.Path, "-type", "d", "-exec", "chmod", "755", "{}", "+"}},
+        {"find", []string{payload.Path, "-type", "f", "-exec", "chmod", "644", "{}", "+"}},
+    }
+
+    for _, c := range commands {
+        output, err := executeCommand(c.cmd, c.args...)
+        if err != nil {
+            http.Error(w, fmt.Sprintf("Command failed: %s, Output: %s", err, output), http.StatusInternalServerError)
+            return
+        }
+    }
+
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("File operations completed successfully"))
 }

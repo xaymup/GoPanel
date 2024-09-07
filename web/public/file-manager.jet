@@ -9,7 +9,10 @@
             </button>
             <input @keyup.enter="fetchFiles" v-model="path" class="flex-1 w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="path"></div>
             <div class="flex-row flex flex-row mb-2 p-2 flex text-xs items-center justify-center" v-if="renaming">✍️ Rename: <input @keyup.enter="applyRename" v-model="selectedFileName" class="flex-1 w-full h-8 text-xs w-42 py-2 px-3 flex-col mr-2 w-40 appearance-none border-b py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"><button @click="applyRename" class="flex-col text-xs w-4">✔️</button></div>
-            <button @click="triggerFileInput" class="items-center mb-2 justify-center flex w-auto text-xs">
+            <button @click="fixPermissions" class="items-center mx-1 mb-2 justify-center flex w-auto text-xs">
+              🚦 Fix Permissions
+            </button>
+            <button @click="triggerFileInput" class="items-center mx-1 mb-2 justify-center flex w-auto text-xs">
               📤 Upload
             </button>
             <input class="hidden" ref="fileInput" type="file" @change="handleFileChange" />
@@ -169,6 +172,30 @@
             closeEditor () {
               this.isModalOpen = false;
             },
+            async fixPermissions () {
+              try {
+                const response = await fetch('http://localhost:1337/api/fix-permissions', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    Path: this.path
+                  })
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+
+                const data = await response.text();
+                this.responseMessage = data;
+              } catch (error) {
+                this.responseMessage = `Error: ${error.message}`;
+              }
+              this.fetchFiles();
+            },
             async saveFile () {
               try {
                 const response = await fetch('http://localhost:1337/api/update-file', {
@@ -286,6 +313,7 @@
                   // document.getElementById("message").innerText = `Request failed: ${err.message}`;
                 }
                 this.isDropdownVisible = false;
+                this.renaming = false;
                 this.fetchFiles();
             },
             async compress() {
@@ -308,6 +336,7 @@
                   // document.getElementById("message").innerText = `Request failed: ${err.message}`;
                 }
                 this.isDropdownVisible = false;
+                this.renaming = false;
                 this.fetchFiles();
             },
             async extract() {
@@ -330,6 +359,7 @@
                   // document.getElementById("message").innerText = `Request failed: ${err.message}`;
                 }
                 this.isDropdownVisible = false;
+                this.renaming = false;
                 this.fetchFiles();
             },
             async paste() {
@@ -389,6 +419,7 @@
               }
               this.fetchFiles();
               this.isDropdownVisible = false;
+              this.renaming = false;
             },
             triggerFileInput() {
               this.$refs.fileInput.click();
@@ -467,6 +498,7 @@
               }
 
               this.fetchFiles();
+              this.renaming = false;
             },
             async goBack() {
 
@@ -488,6 +520,7 @@
 
                 // Fetch files with the updated path
                 this.fetchFiles();
+                this.renaming = false;
               }
 
             },
@@ -510,6 +543,7 @@
               }
 
               console.log(this.selectedFile);
+              this.renaming = false;
             },
             beforeEnter(el) {
               el.style.opacity = 0;
