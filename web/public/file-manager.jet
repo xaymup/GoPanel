@@ -22,15 +22,37 @@
         @enter="enter"
         @leave="leave">
         <div ref="dropdown" id="dropdownMenu" v-show="isDropdownVisible" :style="{ top: `${menuPosition.y}px`, left: `${menuPosition.x}px` }" class="min-w-[13rem] shadow absolute z-10 bg-white divide-y divide-gray-100 border-1 border-blue-500 rounded-lg">
-              <a v-show="isFile" v-text="'✏️ Edit'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a @click="openEditor" v-show="isFile" v-text="'✏️ Edit'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="rename" v-text="'✍️ Rename'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
-              <a v-text="'📦 Compress'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
-              <a v-show="isCompressed" v-text="'📤 Extract'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a @click="compress" v-text="'📦 Compress'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+              <a @click="extract" v-show="isCompressed" v-text="'📤 Extract'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="download" v-show="isFile" v-text="'💾 Download'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="cut" v-text="'✂️ Cut'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="copy" v-text="'📑 Copy'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="paste" v-text="'📋 Paste'" class="text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
               <a @click="deleteFile" v-text="'🗑️ Delete'" class="text-red-500 text-xs cursor-pointer transition-all block px-4 py-2 hover:bg-gray-100"></a>
+        </div>
+        </transition>
+
+
+        <transition
+        @before-enter="beforeEnter"
+        @enter="enter"
+        @leave="leave">
+        <div v-if="isModalOpen" id="fileEditorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+            <h2 v-text="selectedFile" class="text-xs font-semibold mb-4"></h2>
+            <div class="flex border border-gray-300 rounded-md h-96 overflow-hidden">
+              <div class="bg-gray-100 text-gray-500 p-2 text-right pr-4 flex-shrink-0 min-w-10 flex-1" :style="scrollbarStyles">
+                <div v-for="line in lineCount" class="text-xs font-mono mb-5" v-text="lineNumbers" :key="line"></div>
+              </div>
+              <textarea id="editor" v-model="fileContent" @input="updateLineCount" @scroll="syncScroll" @keydown="handleTab" class="resize-none outline-none font-mono text-xs w-full p-2 border border-gray-300 rounded-tr-md rounded-br-md whitespace-pre" placeholder="Write something..."></textarea>
+            </div>
+            <div class="mt-4 flex justify-end space-x-4">
+              <button @click="saveFile" id="saveBtn" class="text-xs">💾 Save</button>
+              <button @click="closeEditor" id="cancelBtn" class="text-xs">❌ Cancel</button>
+            </div>
+          </div>
         </div>
         </transition>
 
@@ -81,14 +103,97 @@
               renaming: false,
               operation: '',
               fileToOperate: "",
-              selectedFileName: ""
+              selectedFileName: "",
+              lineCount: 1,
+              fileContent: ``,
+              isModalOpen: false
             }
           },
           mounted() {
             this.fetchFiles();
             document.addEventListener('click', this.handleClickOutside);
           },
+          computed: {
+        lineNumbers() {
+          const lines = this.fileContent.split('\n').length;
+          // lines.forEach(line => {
+          // if (line.length > maxWidth) {
+          //     longLines++;
+          //     // You can handle long lines here, e.g., log them or store them
+          //     console.log(`Line exceeds ${maxWidth} characters: ${line}`);
+          //   }
+          // });
+
+
+          // return lines.map((line, i) => {
+          //   return (line.length > 69) ? i + 1 + '\n '.repeat(line.length/69) : i + 1;
+          // }).join('\n');
+
+          return Array.from({ length: lines }, (_, i) => i + 1).join('\n');
+          },
+        scrollbarStyles() {
+          return {
+            overflowY: 'hidden', // Allow scrolling
+            scrollbarWidth: 'none', // Hide scrollbar for Firefox
+            msOverflowStyle: 'none', // Hide scrollbar for IE and Edge
+            // WebKit browsers
+            WebkitOverflowScrolling: 'touch', // Enable smooth scrolling (optional)
+            WebkitScrollbar: 'none', // Hide scrollbar for WebKit browsers
+          };
+        }
+      },
           methods: {
+            async openEditor (){
+              try {
+                // Call the Go API endpoint
+                const response = await fetch(`http://localhost:1337/api/get-file?path=${encodeURIComponent(this.selectedFile)}`, {
+                  method: 'GET',
+                  credentials: 'include'
+                });
+
+                // Handle the response
+                if (response.ok) {
+                  const text = await response.text();
+                  this.fileContent = text;
+
+                } else {
+                  const error = await response.text();
+                  // document.getElementById("message").innerText = `Error: ${error}`;
+                }
+                } catch (err) {
+                  // document.getElementById("message").innerText = `Request failed: ${err.message}`;
+                }
+              this.isModalOpen = true;
+              this.isDropdownVisible = false;
+            },
+            closeEditor () {
+              this.isModalOpen = false;
+            },
+            async saveFile () {
+              try {
+                const response = await fetch('http://localhost:1337/api/update-file', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    file_path: this.selectedFile,
+                    content: this.fileContent
+                  })
+                });
+
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+
+                const data = await response.text();
+                this.responseMessage = data;
+              } catch (error) {
+                this.responseMessage = `Error: ${error.message}`;
+              }
+              this.isModalOpen = false;
+            },
             async applyRename (){
               try {
                 // Call the Go API endpoint
@@ -165,6 +270,50 @@
               try {
                 // Call the Go API endpoint
                 const response = await fetch(`http://localhost:1337/api/delete-file?file=${encodeURIComponent(this.selectedFile)}`, {
+                  method: 'POST',
+                  credentials: 'include'
+                });
+
+                // Handle the response
+                if (response.ok) {
+                  const blob = await response.text();
+
+                } else {
+                  const error = await response.text();
+                  // document.getElementById("message").innerText = `Error: ${error}`;
+                }
+                } catch (err) {
+                  // document.getElementById("message").innerText = `Request failed: ${err.message}`;
+                }
+                this.isDropdownVisible = false;
+                this.fetchFiles();
+            },
+            async compress() {
+              try {
+                // Call the Go API endpoint
+                const response = await fetch(`http://localhost:1337/api/compress-file?path=${encodeURIComponent(this.selectedFile)}`, {
+                  method: 'POST',
+                  credentials: 'include'
+                });
+
+                // Handle the response
+                if (response.ok) {
+                  const blob = await response.text();
+
+                } else {
+                  const error = await response.text();
+                  // document.getElementById("message").innerText = `Error: ${error}`;
+                }
+                } catch (err) {
+                  // document.getElementById("message").innerText = `Request failed: ${err.message}`;
+                }
+                this.isDropdownVisible = false;
+                this.fetchFiles();
+            },
+            async extract() {
+              try {
+                // Call the Go API endpoint
+                const response = await fetch(`http://localhost:1337/api/extract-file?path=${encodeURIComponent(this.selectedFile)}`, {
                   method: 'POST',
                   credentials: 'include'
                 });
@@ -375,7 +524,24 @@
               el.style.transition = 'opacity 0.3s';
               el.style.opacity = 0;
               done();
-            }
+            },
+            updateLineCount() {
+        },
+        syncScroll(event) {
+          const lineNumbers = event.target.previousElementSibling;
+          lineNumbers.scrollTop = event.target.scrollTop;
+        },
+        handleTab(event) {
+          if (event.key === 'Tab') {
+            event.preventDefault();
+            const start = event.target.selectionStart;
+            const end = event.target.selectionEnd;
+            this.fileContent = this.fileContent.substring(0, start) + '\t' + this.fileContent.substring(end);
+            this.$nextTick(() => {
+              event.target.selectionStart = event.target.selectionEnd = start + 1;
+            });
+          }
+        }
           }
         });
 </script>

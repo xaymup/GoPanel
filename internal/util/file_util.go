@@ -13,6 +13,8 @@ import (
 	"encoding/json"
     "io"
     "strings"
+    "archive/zip"
+    "io/fs"
 )
 
 type FileDetail struct {
@@ -34,6 +36,10 @@ type DownloadRequest struct {
 	FilePath string `json:"filePath"`
 }
 
+type FileUpdateRequest struct {
+    FilePath string `json:"file_path"`
+    Content  string `json:"content"`
+}
 
 
 func FileExists(path string) bool {
@@ -348,11 +354,24 @@ func CopyFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Copy file
-	if err := copyFile(req.Source, req.Destination); err != nil {
-		http.Error(w, fmt.Sprintf("Error copying file: %v", err), http.StatusInternalServerError)
-		return
+    info, _ := os.Stat(req.Source)
+
+
+	if info.IsDir() {
+        if err := copyDir(req.Source, req.Destination); err != nil {
+            http.Error(w, fmt.Sprintf("Error copying file: %v", err), http.StatusInternalServerError)
+            return
+        }
+		// Source is a directory, copy recursively
+	} else {
+        if err := copyFile(req.Source, req.Destination); err != nil {
+            http.Error(w, fmt.Sprintf("Error copying file: %v", err), http.StatusInternalServerError)
+            return
+        }
+		// Source is a file, copy file
 	}
+
+
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("File copied from %s to %s", req.Source, req.Destination)))
@@ -379,6 +398,33 @@ func copyFile(source string, destination string) error {
 	// Copy the file content
 	_, err = io.Copy(destFile, srcFile)
 	return err
+}
+
+func copyDir(source string, destination string) error {
+    destDirPath := generateFileName(destination)
+
+	err := os.MkdirAll(destDirPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return filepath.WalkDir(source, func(srcPath string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(source, srcPath)
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(destDirPath, relPath)
+
+		if d.IsDir() {
+			return os.MkdirAll(destPath, os.ModePerm)
+		} else {
+			return copyFile(srcPath, destPath)
+		}
+	})
 }
 
 
@@ -460,4 +506,252 @@ func DeleteFile(w http.ResponseWriter, r *http.Request) {
 	// Send a success message
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "File deleted successfully: %s", filePath)
+}
+
+func CompressFile (w http.ResponseWriter, r *http.Request) {
+	// Only allow POST requests
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get the file/folder path from the query parameters
+	path := r.URL.Query().Get("path")
+	if path == "" {
+		http.Error(w, "File or folder path is required", http.StatusBadRequest)
+		return
+	}
+
+	// Ensure the path is absolute
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to resolve absolute path: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Extract the base name of the file/folder (for creating the zip file name)
+	baseName := filepath.Base(absPath)
+	zipFileName := baseName + ".zip"
+	zipFilePath := filepath.Join(filepath.Dir(absPath), zipFileName)
+
+	// Create the zip file
+	zipFile, err := os.Create(zipFilePath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create zip file: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer zipFile.Close()
+
+	// Create a new zip writer
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	// Walk the path to compress
+	err = filepath.Walk(absPath, func(filePath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Create the correct zip file path, relative to the root folder
+		relPath := strings.TrimPrefix(filePath, filepath.Dir(absPath))
+		if relPath == "" {
+			relPath = filepath.Base(absPath) // Include the base name if it's the root folder
+		} else if strings.HasPrefix(relPath, string(os.PathSeparator)) {
+			relPath = relPath[1:] // Remove leading separator if present
+		}
+
+		// If the file is a directory, just add it to the zip without compression
+		if info.IsDir() {
+			_, err := zipWriter.Create(relPath + "/")
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// If the file is not a directory, add it to the zip
+		zipFileEntry, err := zipWriter.Create(relPath)
+		if err != nil {
+			return err
+		}
+
+		// Open the file to read its contents
+		fileToCompress, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer fileToCompress.Close()
+
+		// Copy the file contents to the zip
+		_, err = io.Copy(zipFileEntry, fileToCompress)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to compress folder or file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Send a success message with the zip file path
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Successfully compressed to: %s", zipFilePath)
+}
+
+
+func ExtractFile(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST requests
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get the ZIP file path from the query parameters
+	zipPath := r.URL.Query().Get("path")
+	if zipPath == "" {
+		http.Error(w, "ZIP file path is required", http.StatusBadRequest)
+		return
+	}
+
+	// Ensure the path is absolute
+	absZipPath, err := filepath.Abs(zipPath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to resolve absolute path: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Open the ZIP file
+	zipFile, err := os.Open(absZipPath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to open ZIP file: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer zipFile.Close()
+
+    // Get the file info for the ZIP file
+	zipFileInfo, err := zipFile.Stat()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get file info: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Create a zip reader
+	zipReader, err := zip.NewReader(zipFile, zipFileInfo.Size())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create zip reader: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Create the extraction directory (same directory as the ZIP file)
+	extractDir := strings.TrimSuffix(absZipPath, filepath.Ext(absZipPath))
+	err = os.MkdirAll(extractDir, os.ModePerm)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create extraction directory: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Iterate through each file in the ZIP archive
+	for _, file := range zipReader.File {
+		// Open the file inside the ZIP
+		fileInZip, err := file.Open()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to open file in ZIP: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer fileInZip.Close()
+
+		// Determine the path to extract to
+		filePath := filepath.Join(extractDir, file.Name)
+
+		// Create the necessary directories
+		if file.FileInfo().IsDir() {
+			err = os.MkdirAll(filePath, os.ModePerm)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Failed to create directory: %v", err), http.StatusInternalServerError)
+				return
+			}
+			continue
+		}
+
+		// Create the file to extract to
+		destFile, err := os.Create(filePath)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create file: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer destFile.Close()
+
+		// Copy the file contents
+		_, err = io.Copy(destFile, fileInZip)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to copy file contents: %v", err), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Send a success message
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Successfully extracted ZIP file to: %s", extractDir)
+}
+
+
+// getFileContents reads and returns the contents of a file
+func GetFile(w http.ResponseWriter, r *http.Request) {
+	// Query parameter to get the file path
+	filePath := r.URL.Query().Get("path")
+
+	// Validate file path input
+	if filePath == "" {
+		http.Error(w, "File path is missing", http.StatusBadRequest)
+		return
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	// Read the file contents
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		http.Error(w, "Error reading file", http.StatusInternalServerError)
+		return
+	}
+
+	// Send the file contents as the HTTP response
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write(data)
+}
+
+
+func UpdateFile(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+    var request FileUpdateRequest
+    err := json.NewDecoder(r.Body).Decode(&request)
+    if err != nil {
+        http.Error(w, "Bad request", http.StatusBadRequest)
+        return
+    }
+
+    if request.FilePath == "" {
+        http.Error(w, "File path cannot be empty", http.StatusBadRequest)
+        return
+    }
+
+    err = ioutil.WriteFile(request.FilePath, []byte(request.Content), 0644)
+    if err != nil {
+        http.Error(w, "Failed to write file", http.StatusInternalServerError)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("File updated successfully"))
 }
