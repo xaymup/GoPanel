@@ -1,6 +1,6 @@
 {{ block loginbox() }}
 <div class="block mx-auto">
-    <h2 class="text-xl font-semibold mb-4">Enter the 2FA Code</h2>
+    <h2 class="text-xl font-semibold mb-4">Enter the OTP Code</h2>
     <form id="otp-pin" class="flex space-x-2">
         <!-- Each input field for the 2FA code -->
         <input type="text" maxlength="1" class="w-12 h-12 text-center text-2xl font-bold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">

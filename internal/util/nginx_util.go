@@ -97,6 +97,25 @@ func ListSites(w http.ResponseWriter, r *http.Request) {
 
 func WriteNginxConf (sites []NginxSite) error {
 	RemoveAllFiles(nginxDir)
+
+
+	redirectsFilePath := "/etc/nginx/conf.d/domain-redirects.conf"
+
+    // Check if the file exists
+    if _, err := os.Stat(redirectsFilePath); os.IsNotExist(err) {
+        // File does not exist, so create it
+        file, err := os.Create(redirectsFilePath)
+        if err != nil {
+            fmt.Printf("Error creating file: %v\n", err)
+            return err
+        }
+        defer file.Close()
+        fmt.Println("File created successfully.")
+    } else {
+        fmt.Println("File already exists.")
+    }
+
+
 	for _, site := range sites {
         // Replace spaces in SiteName with underscores
         siteName := strings.ReplaceAll(site.SiteName, " ", "_")
@@ -109,6 +128,8 @@ func WriteNginxConf (sites []NginxSite) error {
 server {
     listen 80;
     server_name %s;
+
+	include /etc/nginx/conf.d/redirects.conf;
 
     root %s;
     index index.php index.html index.htm;
